@@ -1,0 +1,83 @@
+{
+  "title": "City Annual Report",
+  "rootId": "city-annual-report",
+  "nodes": [
+    {
+      "id": "city-annual-report",
+      "label": "City Annual Report",
+      "summary": "The council's yearly report on its programmes."
+    },
+    {
+      "id": "bus-rapid-transit",
+      "label": "Bus Rapid Transit",
+      "summary": "The bus rapid transit programme added dedicated lanes on the northern corridor."
+    },
+    {
+      "id": "stormwater-tunnels",
+      "label": "Stormwater Tunnels",
+      "summary": "The stormwater tunnels programme diverted overflow away from the riverside district."
+    },
+    {
+      "id": "library-digitisation",
+      "label": "Library Digitisation",
+      "summary": "The library digitisation programme scanned the historic newspaper archive."
+    },
+    {
+      "id": "street-lighting-retrofit",
+      "label": "Street Lighting Retrofit",
+      "summary": "The street lighting retrofit programme replaced sodium lamps with dimmable fixtures."
+    },
+    {
+      "id": "school-meal-programme",
+      "label": "School Meal Programme",
+      "summary": "The school meal programme programme sourced vegetables from regional farms."
+    },
+    {
+      "id": "cycle-lane-network",
+      "label": "Cycle Lane Network",
+      "summary": "The cycle lane network programme connected the university to the central station."
+    },
+    {
+      "id": "social-housing-renovation",
+      "label": "Social Housing Renovation",
+      "summary": "The social housing renovation programme insulated older apartment blocks."
+    }
+  ],
+  "connections": [
+    {
+      "from": "city-annual-report",
+      "to": "bus-rapid-transit",
+      "label": "includes"
+    },
+    {
+      "from": "city-annual-report",
+      "to": "stormwater-tunnels",
+      "label": "includes"
+    },
+    {
+      "from": "city-annual-report",
+      "to": "library-digitisation",
+      "label": "includes"
+    },
+    {
+      "from": "city-annual-report",
+      "to": "street-lighting-retrofit",
+      "label": "includes"
+    },
+    {
+      "from": "city-annual-report",
+      "to": "school-meal-programme",
+      "label": "includes"
+    },
+    {
+      "from": "city-annual-report",
+      "to": "cycle-lane-network",
+      "label": "includes"
+    },
+    {
+      "from": "city-annual-report",
+      "to": "social-housing-renovation",
+      "label": "includes"
+    }
+  ]
+}

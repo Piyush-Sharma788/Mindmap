@@ -76,9 +76,33 @@ export ANTHROPIC_API_KEY=...            # never commit it; .env is gitignored
 
 `--max-cost-usd` is required for live and record runs. A case runs only if the money spent so far (provider-reported tokens × list price) plus the case's worst-case cost stays within the ceiling. On the Gemini free tier, the ceiling is applied to paid-equivalent prices.
 
-- **The suite** (`evals/cases.json`) has 10 cases: 4 generate and 6 grow. The grow cases cover overlap, an identical document, a binding ceiling, a ~0.9 MB document, prompt injection, and an empty document.
-- **Status:** no live run has been made yet, so replay currently reports 9 cases as `not_recorded`. The empty-document case checks for an `InputError` and needs no recording. There are no quality numbers yet.
+- **The suite** (`evals/cases.json`) has 10 cases: 4 generate and 6 grow. The grow cases cover overlap, an identical document, a binding ceiling, a 63K-character report whose new material sits in the **last** sections, prompt injection, and an empty document.
+- **Status:** no live run has been made yet, so replay currently reports 9 cases as `not_recorded`. The empty-document case checks for an `InputError` and needs no recording. **There are no model-quality numbers yet.**
 - **Fixtures:** the documents, seed maps and expected concepts were written with AI assistance and reviewed by hand.
+
+### Pipeline bench (offline, deterministic)
+
+```bash
+.venv/bin/mindmap eval --mode pipeline     # ~1 s, no key, no network
+```
+
+This measures the code around the model, with scripted model output and seeded fuzzing. It does **not** measure model quality. It covers:
+- passage selection on a synthetic long report;
+- the duplicate backstop on labelled label pairs;
+- grow fuzz (400 runs): validity, preservation, ceiling, accounting, duplicate catch rate, and admitted value compared with an exact optimum;
+- generate fuzz (300 runs);
+- prompt delimiter integrity;
+- Mermaid escaping.
+
+`evals/results/pipeline-bench-{before,after}-phase4.json` holds the same bench run on the Phase 3 code and on the current code:
+
+| Metric | Phase 3 | Phase 4 |
+|---|---|---|
+| Appendix junk in the excerpt (63K / 107K report) | 49.9% / 49.8% | 4.4% / 0.5% |
+| Duplicate-variant catch rate, grow fuzz | 75.6% | 100% (0 false merges on labelled pairs) |
+| Grow admission, worst case vs optimum | 62.5% | 100% on these seeds (greedy is not guaranteed optimal) |
+| Delimiter integrity on hostile documents | 80% | 100% |
+| Validity / preservation / ceiling / accounting / ≤ 2 requests | 100% | 100% |
 
 ## Layout
 
@@ -95,7 +119,7 @@ src/mindmap/
   generate.py / grow.py   pipelines
   render.py        Mermaid output with escaping
   llm/             provider protocol, CallBudget, Anthropic provider, fake, cassettes
-  evals/           runner + metrics
+  evals/           runner + metrics; pipeline.py (offline bench) + synthetic.py (generated docs)
   cli.py           Typer CLI
 schema/mindmap.schema.json   generated from contract.py (a drift test fails if stale)
 evals/            suite: cases.json, docs/, maps/, cassettes/ (after a live run), results/

@@ -313,5 +313,26 @@ Each item is either a change from the Phase 1 design or a choice the design left
   - **Results from Gemini do not measure Claude.** Any model-choice conclusions must say which provider produced them.
 - **Retry rule change (applies to both providers):** a server-requested delay longer than `RETRY_AFTER_MAX_S` (10 s) is no longer slept and retried; the error is raised after one request. A retry that soon would only hit the same quota again.
 
+## Phase 4 changes (2026-11-11): each one demonstrated by a failing test or a measurement first
+No live evaluation has been run, so these come from offline tests and the new deterministic pipeline bench (`eval --mode pipeline`). Before and after figures are the same bench on the Phase 3 code and on the Phase 4 code (`evals/results/`).
+
+| # | Issue (severity) | Evidence | Fix | After |
+|---|---|---|---|---|
+| P4-1 | **Selection wasted half the input budget** on reference lists and number tables (high: cost, plus crowding out real content on denser documents) | appendix share of excerpt was 49.8% on a 107K synthetic report | numbers and URL fragments no longer count as scoring terms; segment score × `prose_ratio` (the share of letter-only tokens) | 0.5%; topic retention unchanged (30/30) |
+| P4-2 | **Input bound could be exceeded** (medium: breaks the bounded-cost guarantee) | a tag-heavy document produced a 30,427-character document section against a 24,000 budget, because neutralising added 3 characters per tag after selection | neutralise before selection (idempotent, so the prompt still neutralises as a second layer) | the test asserts ≤ 24,000 |
+| P4-3 | **Priority inversion in grow admission** (high: the spec says "keep the most valuable material") | with room for 2: c1 (importance 1), c2 (importance 5, child of c1), c3 (importance 3) gave {c1, c3} (value 4) instead of {c1, c2} (value 6). Fuzz worst case was 62.5% of the optimum | greedy by parent chain (see ARCHITECTURE §5). The `parent_omitted` reason is removed; omissions are "ceiling" with a detail | 100% of the optimum on the 400 fuzz seeds. Greedy is **not** guaranteed optimal (it is a small knapsack) |
+| P4-4 | **Duplicate backstop missed easy variants** (medium) | "The Calvin Cycle" and "A Carbon Tax" were not caught; 75.6% catch rate in the grow fuzz | `label_key` strips one leading article and regular plurals | 100% in the grow fuzz; 0 false merges on 7 near-miss pairs. Known misses: "Buses", "Analyses" |
+| P4-4b | **A regression I introduced during P4-4 and caught before committing** | a "-ses → drop es" rule turned "Leases" into "leas" | strip "es" only after ss/sh/ch/x/z; otherwise strip "s" | covered by `test_label_key_precision` |
+| P4-5 | **Neutraliser bypass** (medium) | `< /document>` and `<  /  document>` (space before the slash) were not neutralised; 80% delimiter integrity | the pattern allows whitespace on both sides of the slash | 100% |
+| P4-6 | **The long-document eval case tested nothing** (medium, eval quality) | the old case repeated one document 800 times; duplicate-segment removal left ~3.5K characters | replaced with a 63K synthetic report whose expected new concepts are in the last sections. All 7 reach the excerpt (deterministic check) | needs a live run to measure the model |
+
+Also in Phase 4:
+- removed the dead constant `FREE_TIER_PROVIDERS`;
+- CLI errors now print an actionable hint;
+- `eval --mode pipeline` was added;
+- provider consistency was rechecked: both providers make one SDK call per `complete()` with SDK retries off, and map errors and stop reasons onto the same types.
+
+**Not changed (no demonstrated problem):** the prompts, generate assembly, the contract, the call budget logic and rendering. Rendering got a fuzz test (100% of lines allowed) but needed no change.
+
 ## TD-22 Sentence segmentation — OPEN
 Use a regex splitter with no NLP dependency (keeps setup to one command). Its weaknesses with abbreviations, decimals and lists are accepted and will be listed as known bugs. Revisit only if the eval shows harm.

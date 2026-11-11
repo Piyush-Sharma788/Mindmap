@@ -136,10 +136,13 @@ existing Mindmap (validated on load) + doc2 bytes
  → [7] dedup:  model-marked duplicates → duplicates[] (reason "model")
               normalised label == existing label, or == an earlier candidate → duplicates[] (reason "lexical")
               invalid duplicate_of id → treated as not-a-duplicate + repair log            code
- → [8] rank:   importance desc → attaches to existing node first → emission order        code
- → [9] admit:  walk the ranked list; admit while capacity > 0 AND attach target is
-              existing-or-already-admitted; otherwise → omitted[] with reason
-              ("ceiling" | "parent_omitted" | "invalid_attach")                          code
+ → [8] resolve parents: attach_to → existing id | new candidate; duplicates redirect to what
+              they duplicate; unusable targets and attach cycles → root (logged)        code
+ → [9] admit (greedy by parent chain, Phase 4): repeatedly take the most important remaining
+              candidate whose chain (itself + not-yet-admitted new ancestors) fits the
+              remaining capacity, and admit the chain parents-first. Ties: shorter chain,
+              attached to an existing node, emission order. The rest → omitted[] "ceiling".
+              Earlier rejections: "invalid", "over_candidate_limit"                        code
  → [10] append-only merge: new nodes get fresh ids (never collide with existing ids),
         new edges attach_to → new node with relation; existing nodes/edges/title/root untouched  code
  → [11] Mindmap.model_validate(max_nodes=25) + preservation check (old ⊆ new, byte-equal)          code

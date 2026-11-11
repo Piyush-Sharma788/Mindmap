@@ -80,7 +80,7 @@ Phase 2 notes:
 | ID | Requirement | Crit | Status | Verification |
 |---|---|---|---|---|
 | EV-1 | Define what is measured (metrics chosen and justified in APPROACH.md) | ⛔ | IN PROGRESS | APPROACH.md section exists |
-| EV-2 | An eval suite directory with a set of document cases (generate and grow pairs) | ⛔ | IMPLEMENTED | `evals/` exists, with the case count stated |
+| EV-2 | An eval suite directory with a set of document cases (generate and grow pairs) | ⛔ | IMPLEMENTED (10 live cases + offline pipeline bench) | `evals/` exists, with the case count stated |
 | EV-3 | `eval` outputs **real numbers** (e.g. validity rate, call count, duplicate rate, preservation, coverage, cost) | ⛔ | BLOCKED | Run the command; the output is saved in the repo and quoted in APPROACH.md |
 | EV-4 | Two runs can be compared, so that a change can be shown to be better or worse | ● | IN PROGRESS | Results stored as JSON with a diff or compare step |
 | EV-5 | Every number in APPROACH.md is reproducible by the code | ⛔ | NOT STARTED | Cross-check each number against an eval output file before submission |
@@ -152,7 +152,7 @@ Phase 2 notes:
 | AR-4 | Grow = one main call plus at most one repair call (TD-3) | GROW-8 | VERIFIED | Happy path = 1 call. Failure path = exactly 2 calls, then an error |
 | AR-5 | Deterministic `select_passages` bounds the document part of the prompt (TD-4) | GROW-9, GEN-4 | VERIFIED | Prompt size ≤ bound for 1 KB, 100 KB and 1 MB documents. Selection is deterministic |
 | AR-6 | Hybrid dedup: model `duplicate_of` plus a normalised-label backstop (TD-5) | GROW-4 | VERIFIED | Unit tests for both paths. Eval `duplicate_leakage` reported |
-| AR-7 | Importance ranking plus parent-aware admission under capacity (TD-6) | GROW-5–7, GROW-12 | VERIFIED | Exact-set tests. Ceiling never exceeded. Every omission has a reason |
+| AR-7 | Importance-based admission under capacity: greedy by parent chain (Phase 4, TD-6, P4-3) | GROW-5–7, GROW-12 | VERIFIED | Exact-set tests. Ceiling never exceeded. Every omission has a reason |
 | AR-8 | `GrowResult` / `GenerateResult` report objects. The contract file stays pure. Report goes to a sidecar JSON (TD-7) | GROW-7, CLI-6 | VERIFIED | CLI test: `--out` validates as a pure `Mindmap`, and the report file exists |
 | AR-9 | Code-assigned slug ids with collision suffixes (TD-8) | DC-4, DC-10 | VERIFIED | Collision test against existing ids |
 | AR-10 | Strict append-only "survive" with a post-condition check (TD-9) | GROW-2, GROW-3 | VERIFIED | Property test: old nodes and edges ⊆ new, byte-equal |
@@ -179,3 +179,16 @@ Phase 2 notes:
 | GEM-8 | `GEMINI_API_KEY` from env or `.env`. Values never printed. `.env` gitignored. No Anthropic key needed | ⛔ | VERIFIED | dotenv tests, `test_gemini_selected_without_key_exits_2...`, `git check-ignore .env` |
 | GEM-9 | The model works on the live API and returns valid structured output | ⛔ | BLOCKED | Needs the user's key and approval for a smoke test |
 | GEM-10 | Free-tier status of the user's project confirmed (no billing) | ⛔ | BLOCKED | The user checks AI Studio → Projects (tier) and the rate-limit page; it cannot be seen offline |
+
+## L. Phase 4: quality and reliability (offline evidence only; no live run)
+
+| ID | Item | Crit | Status | Verification |
+|---|---|---|---|---|
+| P4-1 | Passage selection does not spend the budget on references/tables | ● | VERIFIED | bench: appendix share 49.8% → 0.5% (107K); `test_selection_keeps_topics_and_avoids_appendix_junk` |
+| P4-2 | The excerpt bound holds after neutralisation | ⛔ | VERIFIED | `test_input_bound_holds_for_documents_full_of_delimiter_tags` |
+| P4-3 | Grow keeps the most valuable material under the ceiling (no priority inversion) | ⛔ | VERIFIED (scripted) | `test_important_child_is_not_starved...`; bench value vs optimum, minimum 62.5% → 100% (400 seeds). Real model importance: not measured |
+| P4-4 | Duplicate backstop catches article/case/plural variants without false merges | ● | VERIFIED | `test_label_key_precision`, `test_backstop_catches...`; bench 0 false merges |
+| P4-5 | Spaced delimiter variants are neutralised | ⛔ | VERIFIED | `test_spaced_delimiter_variants_are_neutralised`; bench 100% integrity |
+| P4-6 | The long-document eval case exercises late-document material | ● | IMPLEMENTED | all 7 late topics reach the excerpt (deterministic). Model behaviour: BLOCKED (no live run) |
+| P4-7 | The offline pipeline bench is a regression gate in `make test` | ● | VERIFIED | `tests/test_pipeline_bench.py` |
+| P4-8 | Model quality (concept recall, duplicate leakage, relevance) measured | ⛔ | BLOCKED | needs an approved live run (Gemini free tier proposed) |
