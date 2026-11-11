@@ -79,11 +79,11 @@ Phase 2 notes:
 
 | ID | Requirement | Crit | Status | Verification |
 |---|---|---|---|---|
-| EV-1 | Define what is measured (metrics chosen and justified in APPROACH.md) | ⛔ | IN PROGRESS | APPROACH.md section exists |
+| EV-1 | Define what is measured (metrics chosen and justified in APPROACH.md) | ⛔ | IMPLEMENTED (APPROACH §10) | APPROACH.md section exists |
 | EV-2 | An eval suite directory with a set of document cases (generate and grow pairs) | ⛔ | IMPLEMENTED (10 live cases + offline pipeline bench) | `evals/` exists, with the case count stated |
 | EV-3 | `eval` outputs **real numbers** (e.g. validity rate, call count, duplicate rate, preservation, coverage, cost) | ⛔ | BLOCKED | Run the command; the output is saved in the repo and quoted in APPROACH.md |
 | EV-4 | Two runs can be compared, so that a change can be shown to be better or worse | ● | IN PROGRESS | Results stored as JSON with a diff or compare step |
-| EV-5 | Every number in APPROACH.md is reproducible by the code | ⛔ | NOT STARTED | Cross-check each number against an eval output file before submission |
+| EV-5 | Every number in APPROACH.md is reproducible by the code | ⛔ | IN PROGRESS (pipeline numbers trace to evals/results; live numbers pending) | Cross-check each number against an eval output file before submission |
 | EV-6 | Adversarial or injection cases are included in the suite | ● | IMPLEMENTED | Suite contents |
 
 ## F. Untrusted input & security
@@ -101,13 +101,13 @@ Phase 2 notes:
 
 | ID | Requirement | Crit | Status | Verification |
 |---|---|---|---|---|
-| AG-1 | A justified position on where an agent loop is used or rejected | ⛔ | NOT STARTED | APPROACH.md |
+| AG-1 | A justified position on where an agent loop is used or rejected | ⛔ | IMPLEMENTED (APPROACH.md written) | APPROACH.md |
 | AG-2 | Guardrails: hard call caps, validation gates, timeouts | ⛔ | VERIFIED | Code plus tests (GROW-8, GEN-5) |
 | AG-3 | Observability: each LLM call is logged with model, tokens, latency, purpose and call index | ● | VERIFIED | Test: a trace or usage record is produced per operation |
-| MS-1 | Model per step is chosen and justified | ⛔ | IN PROGRESS | APPROACH.md |
-| MS-2 | Parameters set (temperature, max_tokens, etc.), with the effect of each stated | ⛔ | IN PROGRESS | APPROACH.md, ideally with eval evidence |
+| MS-1 | Model per step is chosen and justified | ⛔ | IN PROGRESS (justified in APPROACH §4; no live comparison) | APPROACH.md |
+| MS-2 | Parameters set (temperature, max_tokens, etc.), with the effect of each stated | ⛔ | IMPLEMENTED (APPROACH §4; effects not measured) | APPROACH.md, ideally with eval evidence |
 | COST-1 | Cost of one generate and one grow is computed from real token usage | ⛔ | BLOCKED | Eval output records tokens × price |
-| COST-2 | The cheapest change that would roughly halve the cost is identified | ⛔ | NOT STARTED | APPROACH.md |
+| COST-2 | The cheapest change that would roughly halve the cost is identified | ⛔ | IMPLEMENTED (estimate only; APPROACH §7) | APPROACH.md |
 | ERR-1 | Provider errors propagate as errors. No catch-all returns canned output | ⛔ | VERIFIED | Test: a fake provider raises → the library raises a typed error |
 | ERR-2 | No function implies a model call while doing keyword or hardcoded work | ⛔ | IMPLEMENTED | Code review of names |
 
@@ -127,19 +127,19 @@ Phase 2 notes:
 | DEL-1 | A public repository URL | ⛔ | NOT STARTED | Open the URL logged out |
 | DEL-2 | README: a **one-command** setup | ⛔ | VERIFIED | Run it on a clean clone |
 | DEL-3 | README: a **one-command** test run with no key | ⛔ | VERIFIED | Run it on a clean clone |
-| DEL-4 | README: the providers and models used | ⛔ | IN PROGRESS | README review |
-| DEL-5 | APPROACH.md: design blocks and where model calls sit | ⛔ | NOT STARTED | Review |
-| DEL-6 | APPROACH.md: every number with the failure it prevents (or "guessed, untested") | ⛔ | NOT STARTED | Grep code constants against the APPROACH table |
-| DEL-7 | APPROACH.md: cost of generate and grow, plus a change that halves it | ⛔ | NOT STARTED | Review |
-| DEL-8 | APPROACH.md: one thing deliberately not done with a model | ⛔ | NOT STARTED | Review |
-| DEL-9 | APPROACH.md: what was built and thrown away | ⛔ | NOT STARTED | Review (keep a running log during development) |
-| DEL-10 | APPROACH.md: known bugs not fixed | ⛔ | NOT STARTED | Review (keep a running log) |
-| DEL-11 | APPROACH.md: what was cut, and what we would do with a month | ⛔ | NOT STARTED | Review |
-| DEL-12 | APPROACH.md: the AI tools used and which parts they wrote | ⛔ | NOT STARTED | Review |
-| DEL-13 | APPROACH.md is short, honest and lists trade-offs (not only strengths) | ⛔ | NOT STARTED | Review |
-| DEL-14 | A time note: actual time, and what is rough | ⛔ | NOT STARTED | Review |
-| PROC-1 | Commit at each logical milestone. Bursts disclosed | ⛔ | IN PROGRESS | `git log` review |
-| PROC-2 | Each AI-assisted line can be defended and every number explained (interview readiness) | ⛔ | IN PROGRESS | Self-review pass over constants and prompts |
+| DEL-4 | README: the providers and models used | ⛔ | VERIFIED (doc-checked IDs; no live call) | README review |
+| DEL-5 | APPROACH.md: design blocks and where model calls sit | ⛔ | IMPLEMENTED (APPROACH.md written) | Review |
+| DEL-6 | APPROACH.md: every number with the failure it prevents (or "guessed, untested") | ⛔ | IMPLEMENTED (APPROACH.md written) | Grep code constants against the APPROACH table |
+| DEL-7 | APPROACH.md: cost of generate and grow, plus a change that halves it | ⛔ | IMPLEMENTED (estimates; measured cost pending live run) | Review |
+| DEL-8 | APPROACH.md: one thing deliberately not done with a model | ⛔ | IMPLEMENTED (APPROACH.md written) | Review |
+| DEL-9 | APPROACH.md: what was built and thrown away | ⛔ | IMPLEMENTED (APPROACH.md written) | Review (keep a running log during development) |
+| DEL-10 | APPROACH.md: known bugs not fixed | ⛔ | IMPLEMENTED (APPROACH.md written) | Review (keep a running log) |
+| DEL-11 | APPROACH.md: what was cut, and what we would do with a month | ⛔ | IMPLEMENTED (APPROACH.md written) | Review |
+| DEL-12 | APPROACH.md: the AI tools used and which parts they wrote | ⛔ | IMPLEMENTED (APPROACH.md written) | Review |
+| DEL-13 | APPROACH.md is short, honest and lists trade-offs (not only strengths) | ⛔ | IMPLEMENTED (APPROACH.md written) | Review |
+| DEL-14 | A time note: actual time, and what is rough | ⛔ | IMPLEMENTED (APPROACH §15; author must add own review time) | Review |
+| PROC-1 | Commit at each logical milestone. Bursts disclosed | ⛔ | IMPLEMENTED (milestone commits; bursts disclosed in APPROACH §15) | `git log` review |
+| PROC-2 | Each AI-assisted line can be defended and every number explained (interview readiness) | ⛔ | IN PROGRESS (author review needed) | Self-review pass over constants and prompts |
 | PROC-3 | Every tunable number lives in `config.py`, with its reason and status (spec, reasoned or guessed) | ⛔ | IMPLEMENTED | Code review. APPROACH.md's numbers table is generated from, or cross-checked against, config |
 
 ## J. Architecture decisions (Phase 1). Status DESIGNED = specified on paper only, not implemented or tested
@@ -161,7 +161,7 @@ Phase 2 notes:
 | AR-13 | Untrusted-input protections (ARCHITECTURE §10) | SEC-1–6 | VERIFIED | Injection eval cases, hostile Mermaid snapshot, size and encoding tests |
 | AR-14 | Observability: a UsageRecord per request, `--trace`, no document text in logs | AG-3, COST-1 | VERIFIED | Test: one record per request, with the expected fields |
 | AR-15 | Eval: deterministic tier plus quality tier; replay/live/record modes; cassettes; `compare` (TD-14) | EV-1–6 | IMPLEMENTED | `eval --mode replay` runs from a clean clone with no key and reproduces the committed results JSON |
-| AR-16 | No agent loop. A fixed DAG with a bounded repair step (TD-13) | AG-1, AG-2 | IN PROGRESS | APPROACH.md argument plus the call-budget tests |
+| AR-16 | No agent loop. A fixed DAG with a bounded repair step (TD-13) | AG-1, AG-2 | IMPLEMENTED (argued in APPROACH §1) | APPROACH.md argument plus the call-budget tests |
 | AR-17 | Provider: Anthropic. Model per step from config. **Model choice pending the user and eval data** (TD-2) | MS-1, MS-2 | IN PROGRESS | Eval comparison table: model × effort → quality and cost |
 | AR-18 | Cost from real `usage` × a dated price table (TD-18) | COST-1, COST-2 | VERIFIED | Unit test of `cost()`. Eval output includes $ per operation |
 
@@ -192,3 +192,13 @@ Phase 2 notes:
 | P4-6 | The long-document eval case exercises late-document material | ● | IMPLEMENTED | all 7 late topics reach the excerpt (deterministic). Model behaviour: BLOCKED (no live run) |
 | P4-7 | The offline pipeline bench is a regression gate in `make test` | ● | VERIFIED | `tests/test_pipeline_bench.py` |
 | P4-8 | Model quality (concept recall, duplicate leakage, relevance) measured | ⛔ | BLOCKED | needs an approved live run (Gemini free tier proposed) |
+
+## M. Phase 5: submission readiness (2026-11-11)
+
+| ID | Item | Status | Evidence |
+|---|---|---|---|
+| P5-1 | APPROACH.md covers every PDF section plus the 16 requested topics | IMPLEMENTED | APPROACH.md §1–15; live findings marked pending |
+| P5-2 | LIVE_EVALUATION_REPORT.md | IMPLEMENTED (status: NOT RUN) | No key configured; no results invented |
+| P5-3 | Live Gemini smoke test (Step A) and full run (Step B) | BLOCKED | Needs `GEMINI_API_KEY`, free-tier confirmation and approval |
+| P5-4 | Clean clone: setup + offline tests + CLI examples | VERIFIED | See the Phase 5 report: clean clone, `make setup`, `make test`, CLI smoke |
+| P5-5 | No credentials in history; no unneeded generated files tracked | VERIFIED | `git log -p` secret scan; `git ls-files` review |
