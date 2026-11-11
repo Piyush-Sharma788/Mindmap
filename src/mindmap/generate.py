@@ -14,7 +14,7 @@ from mindmap.errors import MindmapError
 from mindmap.llm.base import LLMProvider
 from mindmap.llm.budget import BudgetedCaller, CallBudget
 from mindmap.llm.structured import parse_json_model, run_with_repair
-from mindmap.observability import UsageRecord, UsageSummary, summarize
+from mindmap.observability import UsageRecord, UsageSummary, summarize_usage
 from mindmap.prompts import neutralise, GENERATE_SYSTEM, PROMPT_VERSION, generate_user_message
 from mindmap.textprep import ExcerptStats, load_document, select_passages
 from mindmap.wire import GenerateProposal, provider_schema
@@ -60,7 +60,7 @@ def generate(
             sleep=sleep,
         )
     except MindmapError as exc:
-        exc.usage = list(caller.records)  # type: ignore[attr-defined]  # for --trace on failure
+        exc.usage = list(caller.records)  # type: ignore[attr-defined]  # so the CLI can report the requests made
         raise
     return GenerateResult(
         mindmap=mindmap,
@@ -68,5 +68,5 @@ def generate(
         trimmed=trimmed,
         excerpt=excerpt.stats,
         usage=caller.records,
-        usage_summary=summarize(caller.records),
+        usage_summary=summarize_usage(caller.records),
     )

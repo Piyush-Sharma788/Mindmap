@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-11-11 (Phase 7).
 
-**Sources checked:** the assignment PDF (as summarised in PROJECT_CONTEXT.md), the source code, and the offline test suite (187 tests, `make test`).
+**Sources checked:** the assignment PDF (as summarised in PROJECT_CONTEXT.md), the source code, and the offline test suite (191 tests, `make test`).
 
 **Status key:**
 - **VERIFIED:** an automated offline test, or a recorded command run on a fresh clone, proves it.
@@ -10,7 +10,7 @@
 - **IMPLEMENTED:** the code or document exists, but nothing automated checks it.
 - **BLOCKED:** needs a live run, the author or publishing.
 
-> No live model request has been made, so every row is backed by offline evidence only. Real-model quality, real token counts and real cost are **BLOCKED** until an approved live run.
+> Live evidence so far is one live Gemini smoke-test request (`gen-photosynthesis`, see LIVE_EVALUATION_REPORT.md). It confirms F1/F2/C5 on the real Gemini API for one generate; every other row is backed by offline evidence only. Real-model quality, real token counts and real cost are **BLOCKED** until an approved live run.
 
 ## Functional requirements
 | # | Requirement (PDF) | Evidence in code | Test(s) | Status |
@@ -41,19 +41,19 @@
 | L1 | `mindmap generate --in --out` | [cli.py](src/mindmap/cli.py) `generate_cmd` | `test_generate_writes_contract_map_and_separate_report`, `test_model_failure_exits_nonzero_and_writes_nothing`; fresh-clone run without a key → exit 2, no file | VERIFIED (scripted) |
 | L2 | `mindmap grow --map --in --out` | `grow_cmd` | `test_grow_then_render`, `test_bad_inputs_exit_3_before_any_request`; fresh-clone Gemini run without a key → exit 2 | VERIFIED (scripted) |
 | L3 | `mindmap render --map --out` (Mermaid) | [render.py:36](src/mindmap/render.py#L36) | `test_basic_render`, `test_hostile_text_cannot_break_out_of_quotes`; bench render fuzz 1.0; fresh-clone run (17 lines) | VERIFIED (syntax not checked in a Mermaid renderer) |
-| L4 | `mindmap eval --suite evals/` | [runner.py](src/mindmap/evals/runner.py), [pipeline.py](src/mindmap/evals/pipeline.py) | `test_eval_replay_on_shipped_suite_runs_offline`, `test_eval_pipeline_mode_runs_offline`, `test_record_then_replay_gives_identical_metrics`, `test_spending_ceiling_skips_cases_whose_worst_case_would_exceed_it` | VERIFIED. **Live metrics BLOCKED** |
+| L4 | `mindmap eval --suite evals/` | [runner.py](src/mindmap/evals/runner.py), [pipeline.py](src/mindmap/evals/pipeline.py) | `test_eval_replay_on_shipped_suite_runs_offline`, `test_eval_pipeline_mode_runs_offline`, `test_record_then_replay_gives_identical_metrics`, `test_spending_ceiling_skips_cases_whose_worst_case_would_exceed_it` | VERIFIED; replay of the recorded Gemini case re-verified offline in Phase 9 (`test_offline_guarantees.py`). **Live metrics beyond n = 1 BLOCKED** |
 
 ## Process and evaluation criteria
 | # | Requirement | Evidence | Status |
 |---|---|---|---|
-| P1 | Tests pass on a fresh clone with no API key | conftest removes keys, disables `.env`, blocks sockets (`test_network_is_blocked_in_tests`); fresh clone with an empty HOME: 187 passed | VERIFIED |
+| P1 | Tests pass on a fresh clone with no API key | conftest removes keys, disables `.env`, blocks sockets (`test_network_is_blocked_in_tests`); fresh clone with an empty HOME: 191 passed | VERIFIED |
 | P2 | No credentials committed at any point | `.gitignore` (`.env`, `*.pdf`); `.env` exists locally but is ignored and untracked. **Incident (Phase 7):** a filled-in `.env.example` (an edit from outside my changes) was swept into a local, never-pushed commit by `git add -A`. It was removed by amending that commit before any remote existed; no reachable commit contains a key (checked across every reachable commit). Guard added: `tests/test_repo_hygiene.py`. The old commit remains only as an unreachable local object until the reflog is expired | VERIFIED for the publishable history; local purge pending approval |
 | P3 | No catch-all returning canned output | typed errors; the CLI writes nothing on failure; no `except Exception` in services | VERIFIED (`test_model_failure_exits_nonzero_and_writes_nothing`, `test_too_few_nodes_twice_fails_without_fabricating`) |
 | P4 | No function named as if it calls a model but doing keyword matching | `select_passages`, `match_concepts_lexically`, `label_key`: names describe what they do | IMPLEMENTED (code review) |
 | P5 | Commits at milestones; bursts disclosed | `git log`; APPROACH §15 | VERIFIED |
 | P6 | Numbers in the write-up producible by the code | pipeline numbers: `eval --mode pipeline` reproduces `evals/results/pipeline-bench-after-phase4.json` byte for byte; costs labelled estimates; no live numbers claimed | VERIFIED |
 | P7 | Untrusted input handled | size/encoding limits; neutralisation before selection; delimiters; schema output; render escaping | VERIFIED structurally (bench 100% delimiter integrity). **Live injection resistance BLOCKED** |
-| P8 | Evaluation with a real number | pipeline-bench numbers are real; **model-quality numbers BLOCKED** | PARTIAL |
+| P8 | Evaluation with a real number | pipeline-bench numbers are real and reproducible. Live model quality: **one** Gemini generate (n = 1; replay reproduces its 11 recorded metrics offline). Grow and everything else on a real model: BLOCKED | PARTIAL |
 | P9 | README: one setup command, one test command, providers and models | fresh-clone run of `make setup` + `make test` | VERIFIED |
 | P10 | APPROACH.md, all required sections | APPROACH §1–15 | IMPLEMENTED; author placeholders §14–15 **BLOCKED (author)** |
 | P11 | Time note | APPROACH §15 | IMPLEMENTED; the author's own time **BLOCKED (author)** |

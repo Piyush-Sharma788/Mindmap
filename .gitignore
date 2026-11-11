@@ -26,3 +26,7 @@ htmlcov/
 out/
 *.trace.json
 .DS_Store
+
+# Local-only author notes (never part of the public submission)
+CODE_REVIEW_GUIDE.md
+INTERVIEW_PREPARATION.md

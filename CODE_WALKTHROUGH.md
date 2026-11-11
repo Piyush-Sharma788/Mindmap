@@ -80,7 +80,7 @@ A short map of the code for reading it end to end, or for changing it live. Line
 - **Tokens:** read from the provider response.
   - Anthropic: `response.usage`, in `complete()` ([anthropic_provider.py:77](src/mindmap/llm/anthropic_provider.py#L77)).
   - Gemini: `usage_metadata` ([gemini_provider.py:122](src/mindmap/llm/gemini_provider.py#L122)). Input is the prompt count minus cached tokens; output is candidate tokens plus thinking tokens.
-- **Cost:** `estimate_cost_usd` ([pricing.py:56](src/mindmap/pricing.py#L56)) = tokens × the dated list price. It is called once per request in `BudgetedCaller._record` ([budget.py:85](src/mindmap/llm/budget.py#L85)) and summed by `summarize` ([observability.py:48](src/mindmap/observability.py#L48)).
+- **Cost:** `estimate_cost_usd` ([pricing.py:56](src/mindmap/pricing.py#L56)) = tokens × the dated list price. It is called once per request in `BudgetedCaller._record` ([budget.py:85](src/mindmap/llm/budget.py#L85)) and summed by `summarize_usage` ([observability.py:48](src/mindmap/observability.py#L48)).
 - **Eval spending ceiling:** `case_worst_case_usd` ([runner.py:161](src/mindmap/evals/runner.py#L161)) and the check at [runner.py:197](src/mindmap/evals/runner.py#L197).
 
 ## How to add another provider (about 30–60 min, plus tests)
@@ -96,7 +96,7 @@ A short map of the code for reading it end to end, or for changing it live. Line
 
 ## Running things
 ```bash
-make setup && make test                         # offline; 187 tests
+make setup && make test                         # offline; 191 tests
 .venv/bin/mindmap eval --mode pipeline          # deterministic bench, ~1 s
 .venv/bin/mindmap -v grow --map evals/maps/photosynthesis_seed.json \
     --in evals/docs/photosynthesis_part2.txt --out /tmp/m2.json   # needs a key; prints one log line per request

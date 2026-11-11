@@ -21,7 +21,7 @@ from mindmap.errors import InvariantViolation, MindmapError
 from mindmap.llm.base import LLMProvider
 from mindmap.llm.budget import BudgetedCaller, CallBudget
 from mindmap.llm.structured import parse_json_model, run_with_repair
-from mindmap.observability import UsageRecord, UsageSummary, summarize
+from mindmap.observability import UsageRecord, UsageSummary, summarize_usage
 from mindmap.prompts import neutralise, GROW_SYSTEM, PROMPT_VERSION, grow_user_message
 from mindmap.ranking import Admission, admit
 from mindmap.textprep import ExcerptStats, load_document, select_passages
@@ -114,7 +114,7 @@ def grow(
         repairs=notes,
         excerpt=excerpt.stats,
         usage=caller.records,
-        usage_summary=summarize(caller.records),
+        usage_summary=summarize_usage(caller.records),
     )
 
 

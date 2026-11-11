@@ -208,6 +208,6 @@ Phase 2 notes:
 | ID | Item | Status | Evidence |
 |---|---|---|---|
 | P6-1 | Code walkthrough with exact file:line references | IMPLEMENTED | CODE_WALKTHROUGH.md (line references checked against the source index) |
-| P6-2 | Interview preparation: 20 Q&A, trade-offs, 5 exercises | IMPLEMENTED | INTERVIEW_PREPARATION.md; exercises 1–3 trial-run on a scratch clone (outcomes recorded), 4–5 not trial-run |
+| P6-2 | Interview preparation: 20 Q&A, trade-offs, 5 exercises | IMPLEMENTED (kept local; not part of the public submission) | Exercises 1–3 trial-run on a scratch clone (outcomes recorded), 4–5 not trial-run |
 | P6-3 | Audit found no new functional defect; no code changed in Phase 6 | VERIFIED | `git diff` of Phase 6 touches only docs |
 | P6-4 | The author's review % and hands-on time | BLOCKED (author) | Placeholders in APPROACH §14–15 |

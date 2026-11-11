@@ -123,3 +123,18 @@ def test_pause_between_live_cases(tmp_path) -> None:
     waits: list[float] = []
     run_suite(suite, FakeProvider([_dynamic], repeat_last=True), Settings(), "live", pause_s=5, sleep=waits.append)
     assert waits == [5]  # two cases -> one pause between them
+
+
+def test_prompt_size_reproducer_matches_documented_and_live_values() -> None:
+    """APPROACH §7 prompt sizes must be reproducible from the repo (not from a scratch script)."""
+    import pathlib
+
+    from mindmap.config import EXCERPT_MAX_CHARS
+    from mindmap.evals.prompt_sizes import measure
+
+    rows = {r["case"]: r for r in measure(pathlib.Path(__file__).resolve().parents[1] / "evals")}
+    assert rows["gen-photosynthesis"]["prompt_chars"] == 2506  # == prompt_chars logged in the live Gemini run
+    gen = [r["prompt_chars"] for k, r in rows.items() if k.startswith("gen-")]
+    assert 2_000 <= min(gen) and max(gen) <= 2_600  # APPROACH: 2.1-2.5K
+    assert rows["grow-long-document"]["prompt_chars"] <= EXCERPT_MAX_CHARS + 4_000  # bounded despite a 63K doc
+    assert rows["grow-empty-document"]["prompt_chars"] is None

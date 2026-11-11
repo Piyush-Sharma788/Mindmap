@@ -45,7 +45,8 @@ class UsageSummary(BaseModel):
     note: str = "tokens are provider-reported; cost is an estimate from list prices"
 
 
-def summarize(records: list[UsageRecord]) -> UsageSummary:
+def summarize_usage(records: list[UsageRecord]) -> UsageSummary:
+    """Add up per-request token usage and estimated cost. Pure arithmetic: no model involved."""
     costs = [r.estimated_cost_usd for r in records if r.estimated_cost_usd is not None]
     priced_all = all(r.estimated_cost_usd is not None for r in records if r.input_tokens is not None)
     return UsageSummary(

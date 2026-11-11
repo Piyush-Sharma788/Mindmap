@@ -1,6 +1,6 @@
 # APPROACH
 
-> **Status (2026-11-11):** the engine works end to end against scripted model output, and that is covered by 187 offline tests. **No live model call has been made yet** because no API key was available while this was written. Every model-quality statement below is therefore marked *pending* or *estimate*. Pipeline numbers come from committed files you can re-run.
+> **Status (2026-11-11):** the engine works end to end against scripted model output, and that is covered by 191 offline tests. **The only live model call so far is one live Gemini smoke-test request (`gen-photosynthesis`, see LIVE_EVALUATION_REPORT.md):** 1 request, a valid 6-node map, 0 repairs, 563 input / 1,659 output tokens, about $0.0066 paid-equivalent ($0 on the free tier). The full live suite has not been run, so most model-quality statements below are still marked *pending* or *estimate*. Pipeline numbers come from committed files you can re-run.
 
 ## 1. Design
 
@@ -94,7 +94,7 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
 - **Overflow:** everything not added is listed in `<out>.report.json` and on stderr with a reason: `ceiling`, `invalid` or `over_candidate_limit`. A map that is already full still makes one call, so that what was left out can be reported.
 
 ## 7. Cost per operation
-**Measured:** prompt sizes (offline, exact characters sent). **Not measured:** real tokens and costs, because no live run has happened.
+**Measured:** prompt sizes (offline, exact characters sent; reproduce with `python -m mindmap.evals.prompt_sizes`), plus **one live Gemini generate**: 563 input / 1,659 output tokens, about $0.0066 paid-equivalent. That shows the input estimate below is about 2.8× too high for Gemini; output (about 94% of the cost) matched expectations. **Not measured:** grow, anything on Anthropic, and variance. The table below is the original estimate, kept as written.
 
 | | Prompt chars (measured) | Input tokens (est., 2.5 chars/token) | Output tokens (est.: JSON + 0–2K thinking) | Sonnet 5.5 (est.) | Gemini 3.6 Flash paid-equivalent (est.) |
 |---|---|---|---|---|---|
@@ -131,7 +131,7 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
 | 16,000 max output tokens | config | runaway cost; room for thinking | guessed |
 | 180 s timeout, 10 s retry-after cap, 1 s default wait | config | hung requests; blocking users for minutes on a long quota | guessed |
 | 4 words / 40 chars per label, 250-char summary, 4 words / 30 chars per relation, 80-char title | config | unreadable nodes; one "word" that is really 300 characters | spec (4 words), otherwise guessed |
-| 40K worst-case input tokens | pricing | an under-estimated spending ceiling | reasoned (measured prompts are ≤ 11K) |
+| 40K worst-case input tokens | pricing | an under-estimated spending ceiling | reasoned (largest measured prompt: 25.6K chars + 1.4K schema ≈ 11K tokens *estimated*; the one live Gemini count was far lower) |
 | 2.5 chars per token | pricing | wrong token estimates | Anthropic's documented ratio; used only for estimates |
 
 ## 10. Evaluation
@@ -146,7 +146,7 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
      
      Recordings replay offline, so code-only changes can be re-scored for free. A prompt or model change misses the recordings by design.
 - **Findings so far are pipeline-only:** the five bugs fixed in Phase 4 (see TECHNICAL_DECISIONS, P4-1 to P4-6).
-- **Live findings: pending**, to be filled from `LIVE_EVALUATION_REPORT.md` after the approved Gemini run.
+- **Live findings so far** (Gemini smoke test, n = 1): a valid 6-node map, 1 request, 0 repairs, lexical recall 7/7 (some concepts matched only inside summaries). The full suite is pending.
 - **Weaknesses:** small n (10 cases); AI-written fixtures and expectations; lexical matching; no LLM judge (cost and circularity); no human labels.
 
 ## 11. Built, changed or thrown away
@@ -167,6 +167,17 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
   - an LLM-as-judge;
   - an agent loop.
 - **Designed but not built:** `--trace`, `--debug-prompts`, `eval compare`.
+- **Bugs found and fixed.** Each was demonstrated by a failing test or a measurement first; details in TECHNICAL_DECISIONS (Phase 4 table):
+  - pricing used a 10% cache-read rate (5% is correct on Sonnet and Opus 5.5);
+  - the excerpt ratio was missing from the JSON report;
+  - the SDK's missing-credential `TypeError` surfaced as a traceback;
+  - passage selection spent about half the budget on references and tables;
+  - delimiter escaping after selection broke the input bound;
+  - a priority inversion in grow admission;
+  - the duplicate backstop missed "The X" and plural variants (my first fix broke "Leases", and was corrected before committing);
+  - a `< /document` neutraliser bypass;
+  - a usage-totals function was named `summarize`, which read like a model call; renamed `summarize_usage`;
+  - the APPROACH §7 prompt sizes came from a scratch script; now reproducible via `mindmap.evals.prompt_sizes`.
 
 ## 12. Known bugs and limitations (not fixed)
 1. Greedy admission is not optimal in general.
@@ -202,13 +213,41 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
   - streaming;
   - batching for the eval.
 
-## 14. AI tools
-- **Claude Code** (model: Claude Opus 5.5) wrote essentially all the code, tests, fixtures and documents in this repository, in phases.
-- **The author** wrote the phase instructions and made the decisions: Python stack; Sonnet as the default; no PDF in the repo; no refusal fallback; switching to Gemini; approving each phase.
-- **[Author: state here how much of the code you have personally reviewed and changed.]**
+## 14. AI tools and personal contribution
+**What the AI tool did (factual, from the session):**
+- **Claude Code** (model: Claude Opus 5.5) generated essentially all of the code, tests, fixtures, evaluation scripts and documents, across ten supervised phases.
+- It also ran the tests, the benchmarks, the single live smoke test and the security checks.
 
-## 15. Time note and commit history
-- **Agent session:** from about 07:52 on 2026-11-11, roughly 1.5–2 h of wall-clock time in total, including pauses for approval between phases. `git log` has the exact commit times.
-- **Commits:** every commit was made on 2026-11-11, starting at 08:16 (see `git log`). They are **agent-paced bursts minutes apart**, disclosed here as the assignment asks. Each commit is one milestone that was tested before committing.
-- **Rough because of time:** no live results; a small, AI-written eval set; heuristics noted in §12.
-- **[Author: add your own review and hands-on time.]**
+**What the author did (factual, from the session):**
+- Wrote the phase instructions and approved every phase.
+- Made the key decisions: Python stack; Sonnet as the Anthropic default; no PDF in the repo; no refusal fallback; switching the live evaluation to the Gemini free tier; approving the single smoke test; not running the full live suite.
+- Rotated the leaked key.
+
+**Personal contribution: to be completed by the author. Nothing below has been assumed.**
+| Category | Author's answer |
+|---|---|
+| Code generated by AI tools | Essentially all of it (see above) |
+| Code personally **inspected and understood** (files, or rough %) | **[Author: fill in]** |
+| Code personally **modified or debugged** (files and what changed, or "none") | **[Author: fill in]** |
+| Tests and reports personally **reviewed** (which ones) | **[Author: fill in]** |
+
+## 15. Time note, commit history and process disclosure
+| Time category | Value | Source |
+|---|---|---|
+| **Author's hands-on time** (reading, reviewing, testing, deciding; excluding waiting) | **[Author: fill in]** | author |
+| **Claude's execution time** (the agent working autonomously within phases) | not separately measured | the agent cannot reliably separate its own working time from approval pauses |
+| **Whole session, wall-clock** (agent work **plus** the author's approval pauses) | about 07:52 → 09:50 on 2026-11-11, then later short phases (Phases 8–10.1) | file and commit timestamps |
+
+- **Commits:** 17 commits on 2026-11-11, 08:16–09:22 (`git log`), **agent-paced bursts, often minutes apart**. Each is a tested milestone. Phases 8–10.1 (the live smoke test, the offline audit, the final fixes) are **not yet committed**; they will become separate, phase-labelled commits after the author's review. **Attribution:** the first 17 commits carry a `Co-Authored-By` trailer naming the AI tool. At the author's request, later commits use only the author's Git identity and neutral messages. AI assistance is disclosed in this document (§14) instead, and is not being hidden.
+- **Credential incident (disclosed):**
+  - A Gemini API key was put into the *tracked* template `.env.example`, and a `git add -A` **committed it in local Git history**.
+  - The affected commit was **never pushed**: the repository had no remote at any point.
+  - It was caught in the same session by inspecting the commit's diff with values masked, and the commit was amended.
+  - The author **revoked the key and replaced it**.
+  - After checking that nothing else would be lost, the leaked commit and all unreachable objects were **purged** (`git reflog expire --expire=now --all && git gc --prune=now`).
+  - **Later scans found no credential** in Git storage (every object) or in the files intended for submission.
+  - `tests/test_repo_hygiene.py` now fails if `.env.example` ever holds a secret value, or if `.env` becomes tracked.
+- **Rough because of time:**
+  - live evidence is a single Gemini generate (n = 1); no live grow; no Anthropic run;
+  - a small, AI-written eval set with lexical matching;
+  - the heuristics and known bugs in §12.

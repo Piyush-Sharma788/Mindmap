@@ -2,7 +2,13 @@
 
 A library and thin CLI that turns a document into a small concept mindmap (`generate`) and grows an existing map with a second document (`grow`). Grow uses **at most 2 LLM requests**, whatever the document length, and the map holds **at most 25 nodes**.
 
-Design: [ARCHITECTURE.md](ARCHITECTURE.md). Decisions and trade-offs: [TECHNICAL_DECISIONS.md](TECHNICAL_DECISIONS.md). Requirement status: [REQUIREMENTS_CHECKLIST.md](REQUIREMENTS_CHECKLIST.md). Write-up: [APPROACH.md](APPROACH.md). Live evaluation: [LIVE_EVALUATION_REPORT.md](LIVE_EVALUATION_REPORT.md) (**not run yet**: no API key so far). Code map: [CODE_WALKTHROUGH.md](CODE_WALKTHROUGH.md). Interview notes: [INTERVIEW_PREPARATION.md](INTERVIEW_PREPARATION.md). Audit: [FINAL_REQUIREMENTS_AUDIT.md](FINAL_REQUIREMENTS_AUDIT.md). Submission: [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md).
+Design: [ARCHITECTURE.md](ARCHITECTURE.md). Decisions and trade-offs: [TECHNICAL_DECISIONS.md](TECHNICAL_DECISIONS.md). Requirement status: [REQUIREMENTS_CHECKLIST.md](REQUIREMENTS_CHECKLIST.md). Write-up: [APPROACH.md](APPROACH.md). Live evaluation: [LIVE_EVALUATION_REPORT.md](LIVE_EVALUATION_REPORT.md) (**smoke test only**: one Gemini generate case; the full suite has not been run). Code map: [CODE_WALKTHROUGH.md](CODE_WALKTHROUGH.md). Audit: [FINAL_REQUIREMENTS_AUDIT.md](FINAL_REQUIREMENTS_AUDIT.md). Submission: [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md).
+
+## How it works (summary)
+- **Deterministic code bounds the input.** Validation, delimiter neutralisation, then extractive passage selection to a fixed 24,000-character budget (no model).
+- **One structured-output request** through a `BudgetedCaller`, which takes a budget slot *before* sending. Generate and grow each allow at most 2 requests: the first, plus one retry or repair. SDK retries are off.
+- **Code turns the model's draft into the contract.** Ids, graph repair, 5–9 nodes for generate; for grow: duplicates (the model's judgement plus an exact-match backstop), greedy admission under the 25-node ceiling, and an append-only merge checked byte-for-byte. Every candidate ends up added, duplicate or omitted, with a reason.
+- Full design: [ARCHITECTURE.md](ARCHITECTURE.md). Reasoning, costs and trade-offs: [APPROACH.md](APPROACH.md).
 
 ## Setup (one command)
 
@@ -35,7 +41,7 @@ Pick the provider with `MINDMAP_PROVIDER` (`anthropic` by default, or `gemini`).
 | Other parameters | `effort=medium`, `max_tokens=16000`, timeout 180 s, system prompt marked cacheable | `max_output_tokens=16000`, timeout 180 000 ms, default thinking, `candidate_count=1` |
 | Sampling (`temperature`) | not sent: current Claude models reject it | not sent (provider default) |
 
-**Verification.** All IDs and prices were checked against official docs on 2026-11-11: platform.claude.com for the models and pricing pages; aistudio.google.com for the models, pricing, rate limits and structured output pages. **No live request has been made with either provider yet.**
+**Verification.** All IDs and prices were checked against official docs on 2026-11-11: platform.claude.com for the models and pricing pages; aistudio.google.com for the models, pricing, rate limits and structured output pages. **Live so far: one Gemini smoke-test request (generate); no Anthropic request has been made.**
 
 **Gemini free tier.**
 - **Cost:** `gemini-3.6-flash` input and output are free of charge on the free tier. The cost figures the engine reports are *paid-tier equivalents* ($0.75 in / $3.75 out per MTok until 2026-12-31). Requests are free only if your Google AI Studio project is on the Free tier, with no billing attached. Check this on the AI Studio Projects page.
@@ -77,7 +83,8 @@ export ANTHROPIC_API_KEY=...            # never commit it; .env is gitignored
 `--max-cost-usd` is required for live and record runs. A case runs only if the money spent so far (provider-reported tokens × list price) plus the case's worst-case cost stays within the ceiling. On the Gemini free tier, the ceiling is applied to paid-equivalent prices.
 
 - **The suite** (`evals/cases.json`) has 10 cases: 4 generate and 6 grow. The grow cases cover overlap, an identical document, a binding ceiling, a 63K-character report whose new material sits in the **last** sections, prompt injection, and an empty document.
-- **Status:** no live run has been made yet, so replay currently reports 9 cases as `not_recorded`. The empty-document case checks for an `InputError` and needs no recording. **There are no model-quality numbers yet.**
+- **Status:** only the smoke test has been recorded. Replay scores `gen-photosynthesis` offline (reproducing the live numbers) and reports 8 cases as `not_recorded`.
+- **Replaying:** run with the same provider and model as the recording, for example `MINDMAP_PROVIDER=gemini .venv/bin/mindmap eval --suite evals --mode replay` (no key needed). With other settings every case shows `not_recorded`, by design. Replay never constructs a real provider (`tests/test_offline_guarantees.py`). **Replayed latency is reported as 0** because cassettes don't store it, so quote latency only from live runs. The empty-document case checks for an `InputError` and needs no recording. **There are no model-quality numbers yet.**
 - **Fixtures:** the documents, seed maps and expected concepts were written with AI assistance and reviewed by hand.
 
 ### Pipeline bench (offline, deterministic)
@@ -125,6 +132,14 @@ schema/mindmap.schema.json   generated from contract.py (a drift test fails if s
 evals/            suite: cases.json, docs/, maps/, cassettes/ (after a live run), results/
 tests/            offline pytest suite
 ```
+
+## Limitations
+- **Live model evidence is one Gemini generate** (n = 1; see LIVE_EVALUATION_REPORT.md). Grow has not run against a real model, and nothing has run on Anthropic. Pipeline-bench numbers come from scripted model output; they are not model quality.
+- **Cost:** most cost figures are estimates. Measured prompt sizes are reproducible with `python -m mindmap.evals.prompt_sizes`.
+- **Duplicate detection:** the backstop is lexical and misses paraphrases and some plurals. Duplicates also share the 15-candidate limit.
+- **Admission and text heuristics:** greedy admission is not guaranteed optimal; sentence rules are heuristics; text dropped by the excerpt is reported only as a ratio.
+- **Eval set:** small and AI-written. The full list is in APPROACH.md §12.
+- **Live calls from the CLI:** once `.env` holds a key, `generate`, `grow` and `eval --mode record|live` run from this folder make **live** requests. `make test`, `eval --mode pipeline` and `eval --mode replay` never do; a test proves this.
 
 ## AI assistance
 

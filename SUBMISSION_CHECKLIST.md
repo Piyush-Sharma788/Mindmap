@@ -1,7 +1,7 @@
 # Submission Checklist
 
 ## Repository metadata (proposed)
-- **Name:** `mini-mindmap-engine`
+- **Repository:** https://github.com/Piyush-Sharma788/Mindmap (name `Mindmap`, owner `Piyush-Sharma788`)
 - **Description (one line):** "Mini mindmap engine (Visualli AI Challenge): generate a 5–9 node mindmap from text and grow it with a second document within 2 LLM calls and 25 nodes. Python library + CLI, offline-tested."
 - **Topics:** `llm`, `structured-output`, `mindmap`, `python`, `pydantic`, `cli`, `evaluation`, `prompt-injection`, `anthropic`, `gemini`
 
@@ -20,8 +20,8 @@ A Python library and CLI for the Visualli AI Challenge. `generate` turns prose i
 - Tests (offline, no API key): `make test`
 - Design and trade-offs: APPROACH.md
 
-> Status: verified with 187 offline tests and a deterministic pipeline bench.
-> The live model evaluation has not been run yet (see LIVE_EVALUATION_REPORT.md).
+> Status: verified with 191 offline tests and a deterministic pipeline bench.
+> Live: one Gemini smoke-test case passed (see LIVE_EVALUATION_REPORT.md); the full live suite has not been run.
 ```
 *(The current README already contains this information. Adopt the block above only if you want a shorter top section.)*
 
@@ -33,14 +33,14 @@ A Python library and CLI for the Visualli AI Challenge. `generate` turns prose i
 | Source `src/mindmap/`, tests `tests/`, eval suite `evals/` | yes |
 | `pyproject.toml`, `Makefile`, `.gitignore`, `.env.example` | yes |
 | `schema/mindmap.schema.json` (generated; a drift test guards it) | yes |
-| Supporting: ARCHITECTURE, TECHNICAL_DECISIONS, REQUIREMENTS_CHECKLIST, FINAL_REQUIREMENTS_AUDIT, LIVE_EVALUATION_REPORT, CODE_WALKTHROUGH, INTERVIEW_PREPARATION, PROJECT_CONTEXT | yes |
+| Supporting: ARCHITECTURE, TECHNICAL_DECISIONS, REQUIREMENTS_CHECKLIST, FINAL_REQUIREMENTS_AUDIT, LIVE_EVALUATION_REPORT, CODE_WALKTHROUGH, PROJECT_CONTEXT, PHASE_9_FINAL_AUDIT, SUBMISSION_READINESS_REPORT | yes |
 | **Must NOT be present:** `.env`, the assignment PDF, `.venv/`, caches | confirmed untracked and ignored |
 
 ## Commands for a reviewer
 ```bash
-git clone <repo-url> && cd mini-mindmap-engine
+git clone https://github.com/Piyush-Sharma788/Mindmap.git && cd Mindmap
 make setup                                   # Python 3.11 venv + install (PYTHON=python3.12 to override)
-make test                                    # 187 offline tests, no key, no network
+make test                                    # 191 offline tests, no key, no network
 .venv/bin/mindmap eval --mode pipeline       # deterministic pipeline bench (~1 s)
 .venv/bin/mindmap render --map evals/maps/photosynthesis_seed.json --out seed.mmd
 # Live (needs a key; Gemini free tier or Anthropic):
@@ -51,7 +51,7 @@ cp .env.example .env    # set MINDMAP_PROVIDER and the key
 ```
 
 ## Limitations to disclose (already in APPROACH §12 and the reports)
-1. **No live model evaluation yet.** Model quality, real tokens, cost and latency are unmeasured. Cost figures are estimates.
+1. **Live evaluation is a single Gemini smoke test (n = 1, generate only).** Grow, Anthropic, variance and most model-quality metrics are unmeasured, and most cost figures are estimates.
 2. Pipeline-bench numbers come from scripted model output; they are not model quality.
 3. Small, AI-written eval set (10 cases) with lexical concept matching.
 4. Greedy admission is not guaranteed optimal. Duplicates share the 15-candidate limit.
@@ -64,6 +64,6 @@ cp .env.example .env    # set MINDMAP_PROVIDER and the key
 ## Before making the repository public (your tasks)
 - [ ] Fill APPROACH §14 (your code-review %) and §15 (your hands-on time).
 - [ ] Optional but strongly recommended: approve the live Gemini smoke test, then the full run, so APPROACH §7/§10 and LIVE_EVALUATION_REPORT carry real numbers. `.env` is now present locally with a Gemini key line; no request has been made.
-- [ ] Read CODE_WALKTHROUGH.md and do the INTERVIEW_PREPARATION exercises 1–3 yourself.
+- [ ] Read CODE_WALKTHROUGH.md and work through your local interview and code-review notes (not part of the public repo).
 - [ ] Run `make test` and the secret scan again after any edit.
 - [ ] Approve: create the public GitHub repository and push `main` (not done yet).
