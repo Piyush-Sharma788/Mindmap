@@ -1,27 +1,11 @@
 from __future__ import annotations
 
-import random
-
 import pytest
 
+from helpers import synthetic_doc
 from mindmap.config import EXCERPT_MAX_CHARS, MAX_INPUT_BYTES
 from mindmap.errors import InputError
 from mindmap.textprep import load_document, segment, select_passages
-
-WORDS = ("photosynthesis chlorophyll enzyme glucose membrane protein carbon oxygen light energy cell "
-         "water root leaf soil nitrogen climate drought yield harvest market price policy").split()
-
-
-def synthetic_doc(n_bytes: int, seed: int = 7) -> str:
-    rng = random.Random(seed)
-    parts: list[str] = []
-    size = 0
-    while size < n_bytes:
-        sentence = " ".join(rng.choice(WORDS) for _ in range(rng.randint(6, 18))).capitalize() + "."
-        parts.append(sentence)
-        size += len(sentence) + 1
-    return " ".join(parts)[:n_bytes]
-
 
 def test_short_document_passes_through_verbatim() -> None:
     doc = "Plants make sugar. They need light."

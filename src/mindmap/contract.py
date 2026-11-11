@@ -211,6 +211,22 @@ def reachable_from_root(mindmap: Mindmap) -> set[str]:
     return seen
 
 
+def load_mindmap(raw: bytes) -> Mindmap:
+    """Parse and validate an untrusted map file. Raises InputError (never a partial map)."""
+    from pydantic import ValidationError
+
+    from mindmap.config import MAX_INPUT_BYTES
+    from mindmap.errors import InputError
+
+    if len(raw) > MAX_INPUT_BYTES:
+        raise InputError(f"map file is {len(raw):,} bytes; the limit is {MAX_INPUT_BYTES:,}")
+    try:
+        return Mindmap.model_validate_json(raw)
+    except ValidationError as exc:
+        problems = "; ".join(f"{'.'.join(map(str, e['loc'])) or '<root>'}: {e['msg']}" for e in exc.errors()[:5])
+        raise InputError(f"map file is not a valid mindmap: {problems}") from exc
+
+
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schema" / "mindmap.schema.json"
 
 

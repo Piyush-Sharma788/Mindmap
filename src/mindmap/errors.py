@@ -59,3 +59,7 @@ class ModelOutputError(MindmapError):
 
 class CallBudgetExceeded(MindmapError):
     """A code path tried to exceed its LLM request budget. Always a bug."""
+
+
+class InvariantViolation(MindmapError):
+    """A post-condition failed (e.g. an existing node changed during grow). Always a bug."""

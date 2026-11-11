@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import random
 from typing import Any
 
 from mindmap.contract import Mindmap
@@ -61,3 +62,18 @@ def candidate(
 
 def grow_reply(*candidates: dict[str, Any]) -> str:
     return json.dumps({"candidates": list(candidates)})
+
+
+WORDS = ("photosynthesis chlorophyll enzyme glucose membrane protein carbon oxygen light energy cell "
+         "water root leaf soil nitrogen climate drought yield harvest market price policy").split()
+
+
+def synthetic_doc(n_bytes: int, seed: int = 7) -> str:
+    rng = random.Random(seed)
+    parts: list[str] = []
+    size = 0
+    while size < n_bytes:
+        sentence = " ".join(rng.choice(WORDS) for _ in range(rng.randint(6, 18))).capitalize() + "."
+        parts.append(sentence)
+        size += len(sentence) + 1
+    return " ".join(parts)[:n_bytes]
