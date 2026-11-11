@@ -20,16 +20,31 @@ make test
 
 The test suite removes Anthropic credentials from the environment and blocks all socket connections. Every LLM interaction in the tests goes through a scripted `FakeProvider`.
 
-## Provider and models
+## Providers and models
 
-| | |
-|---|---|
-| Provider | Anthropic Claude API, via the official `anthropic` Python SDK (2.x) |
-| Default model | `claude-sonnet-5-5`, for both generate and grow |
-| Comparison candidates | `claude-haiku-5-5` (cheaper), `claude-opus-5-5` (quality benchmark) |
-| Parameters | `output_config.format` = a JSON schema derived from the contract; `output_config.effort = medium`; `max_tokens = 16000`; SDK `max_retries = 0`; timeout 180 s. **No** `temperature` or `top_p`: current Claude models reject sampling parameters |
+Pick the provider with `MINDMAP_PROVIDER` (`anthropic` by default, or `gemini`). The engine is identical for both; only `src/mindmap/llm/<provider>_provider.py` differs.
 
-The model IDs and list prices (Haiku 5.5 $0.10/$0.50, Sonnet 5.5 $2/$10, Opus 5.5 $4/$20 per 1M input/output tokens) come from Anthropic's API reference, as cached on 2026-11-03. **No live request has been made yet**, so the IDs and request shape are not yet confirmed against the live API.
+| | Anthropic | Gemini |
+|---|---|---|
+| SDK | `anthropic` (2.x) | `google-genai` (3.1) |
+| Key | `ANTHROPIC_API_KEY` | `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) |
+| Default model | `claude-sonnet-5-5` | `gemini-3.6-flash` (stable; free tier) |
+| Structured output | `output_config.format` (json_schema) | `response_mime_type=application/json` + `response_json_schema` |
+| Schema | `wire.provider_schema()` | the same schema, with nullable `anyOf` rewritten to `type: [X, "null"]` (Gemini's documented form) |
+| SDK retries | `max_retries=0` | `HttpRetryOptions(attempts=1)` |
+| Other parameters | `effort=medium`, `max_tokens=16000`, timeout 180 s, system prompt marked cacheable | `max_output_tokens=16000`, timeout 180 000 ms, default thinking, `candidate_count=1` |
+| Sampling (`temperature`) | not sent: current Claude models reject it | not sent (provider default) |
+
+**Verification.** All IDs and prices were checked against official docs on 2026-11-11: platform.claude.com for the models and pricing pages; aistudio.google.com for the models, pricing, rate limits and structured output pages. **No live request has been made with either provider yet.**
+
+**Gemini free tier.**
+- **Cost:** `gemini-3.6-flash` input and output are free of charge on the free tier. The cost figures the engine reports are *paid-tier equivalents* ($0.75 in / $3.75 out per MTok until 2026-12-31). Requests are free only if your Google AI Studio project is on the Free tier, with no billing attached. Check this on the AI Studio Projects page.
+- **Rate limits:** Google applies limits per project. The public docs don't list the free-tier numbers for this model, so check yours on the AI Studio rate-limit page.
+- **Data use:** Google may use free-tier content to improve its products, so don't send confidential documents.
+
+## Configuration
+
+Copy `.env.example` to `.env` (it is gitignored) and fill in a key. The CLI loads `.env` from the current directory without overriding variables that are already set, and it never prints values. The test suite disables `.env` loading.
 
 ## Usage
 
@@ -54,9 +69,12 @@ export ANTHROPIC_API_KEY=...            # never commit it; .env is gitignored
 
 ```bash
 .venv/bin/mindmap eval --suite evals/ --mode replay   # offline, free: replays recorded responses
-.venv/bin/mindmap eval --suite evals/ --mode record   # LIVE (costs money): runs and records responses
-.venv/bin/mindmap eval --suite evals/ --mode live     # LIVE, records nothing
+.venv/bin/mindmap eval --suite evals/ --mode record --max-cost-usd 2   # LIVE: runs and records responses
+.venv/bin/mindmap eval --suite evals/ --mode live --max-cost-usd 2     # LIVE, records nothing
+# options: --cases id1,id2 (subset)   --pause-s 10 (wait between cases, for low per-minute quotas)
 ```
+
+`--max-cost-usd` is required for live and record runs. A case runs only if the money spent so far (provider-reported tokens × list price) plus the case's worst-case cost stays within the ceiling. On the Gemini free tier, the ceiling is applied to paid-equivalent prices.
 
 - **The suite** (`evals/cases.json`) has 10 cases: 4 generate and 6 grow. The grow cases cover overlap, an identical document, a binding ceiling, a ~0.9 MB document, prompt injection, and an empty document.
 - **Status:** no live run has been made yet, so replay currently reports 9 cases as `not_recorded`. The empty-document case checks for an `InputError` and needs no recording. There are no quality numbers yet.

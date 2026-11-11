@@ -14,7 +14,7 @@ from typing import Any, TypeVar
 
 import typer
 
-from mindmap.config import Settings
+from mindmap.config import Settings, load_dotenv
 from mindmap.contract import load_mindmap
 from mindmap.errors import (
     CallBudgetExceeded,
@@ -41,8 +41,13 @@ EXIT_CODES: list[tuple[type[MindmapError], int]] = [
 ]
 
 
-def make_provider() -> LLMProvider:
-    """Construct the real provider lazily (tests replace this function)."""
+def make_provider(settings: Settings | None = None) -> LLMProvider:
+    """Construct the configured real provider lazily (tests replace this function)."""
+    provider = (settings or _settings()).provider
+    if provider == "gemini":
+        from mindmap.llm.gemini_provider import GeminiProvider
+
+        return GeminiProvider()
     from mindmap.llm.anthropic_provider import AnthropicProvider
 
     return AnthropicProvider()
@@ -104,6 +109,7 @@ def _summary(kind: str, result: Any, out: Path) -> None:
 @app.callback()
 def main(verbose: bool = typer.Option(False, "--verbose", "-v", help="Log each LLM request to stderr.")) -> None:
     setup_logging(logging.INFO if verbose else logging.WARNING)
+    load_dotenv(Path.cwd() / ".env")  # names only are ever reported; values are never printed
 
 
 @app.command("generate")
@@ -117,7 +123,7 @@ def generate_cmd(
     def work() -> None:
         raw = _read(in_path)
         settings = _settings()
-        result = generate(raw, make_provider(), settings)
+        result = generate(raw, make_provider(settings), settings)
         _write_atomic(out, result.mindmap.to_json() + "\n")
         _write_atomic(_report_path(out), result.model_dump_json(by_alias=True, indent=2) + "\n")
         _summary("generate", result, out)
@@ -140,7 +146,7 @@ def grow_cmd(
         existing = load_mindmap(_read(map_path))
         raw = _read(in_path)
         settings = _settings()
-        result = grow(existing, raw, make_provider(), settings)
+        result = grow(existing, raw, make_provider(settings), settings)
         _write_atomic(out, result.mindmap.to_json() + "\n")
         _write_atomic(_report_path(out), result.model_dump_json(by_alias=True, indent=2) + "\n")
         _summary("grow", result, out)
@@ -171,6 +177,7 @@ def eval_cmd(
     max_cost_usd: float | None = typer.Option(
         None, "--max-cost-usd", help="Spending ceiling (USD, estimated from reported usage). Required for live/record."),
     cases: str | None = typer.Option(None, "--cases", help="Comma-separated case ids to run (default: all)."),
+    pause_s: float = typer.Option(0.0, "--pause-s", help="Seconds to wait between cases that made requests."),
 ) -> None:
     """Run the eval suite and write a results JSON."""
     from mindmap.evals.runner import run_suite
@@ -188,12 +195,12 @@ def eval_cmd(
         if mode == "replay":
             provider: LLMProvider = ReplayProvider(cassettes)
         elif mode == "record":
-            provider = RecordingProvider(make_provider(), cassettes)
+            provider = RecordingProvider(make_provider(settings), cassettes)
         else:
-            provider = make_provider()
+            provider = make_provider(settings)
         case_ids = [c.strip() for c in cases.split(",") if c.strip()] if cases else None
         results = run_suite(suite, provider, settings, mode, max_cost_usd=max_cost_usd,  # type: ignore[arg-type]
-                            case_ids=case_ids)
+                            case_ids=case_ids, pause_s=pause_s)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         target = out or suite / "results" / f"{stamp}-{mode}-{settings.model_generate}.json"
         _write_atomic(target, json.dumps(results, indent=2) + "\n")

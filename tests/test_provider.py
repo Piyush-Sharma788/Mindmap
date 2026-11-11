@@ -112,13 +112,17 @@ def test_sdk_credential_typeerror_becomes_config_error() -> None:
         AnthropicProvider(client=_client(TypeError("unexpected"))).complete(_request())
 
 
-def test_sdk_is_imported_in_exactly_one_module() -> None:
+@pytest.mark.parametrize("markers, module", [(("import anthropic", "from anthropic"), "llm/anthropic_provider.py"),
+                                             (("from google", "import google"), "llm/gemini_provider.py")])
+def test_each_sdk_is_imported_in_exactly_one_module(markers, module) -> None:
     importers = [p.relative_to(SRC).as_posix() for p in SRC.rglob("*.py")
-                 if "import anthropic" in p.read_text() or "from anthropic" in p.read_text()]
-    assert importers == ["llm/anthropic_provider.py"]
+                 if any(m in p.read_text() for m in markers)]
+    assert importers == [module]
 
 
-def test_no_embedding_or_token_count_calls() -> None:
-    code = (SRC / "llm" / "anthropic_provider.py").read_text()
+@pytest.mark.parametrize("module, call", [("anthropic_provider.py", "messages.create("),
+                                          ("gemini_provider.py", "models.generate_content(")])
+def test_no_embedding_token_count_or_extra_calls(module, call) -> None:
+    code = (SRC / "llm" / module).read_text()
     assert "count_tokens" not in code and "embed" not in code
-    assert code.count("messages.create(") == 1
+    assert code.count(call) == 1

@@ -175,6 +175,8 @@ def run_suite(
     *,
     max_cost_usd: float | None = None,
     case_ids: list[str] | None = None,
+    pause_s: float = 0.0,
+    sleep: Any = time.sleep,
 ) -> dict[str, Any]:
     """Run the suite. With `max_cost_usd`, a case runs only if (spent so far, from provider-reported
     usage) + (that case's worst-case cost) stays within the ceiling; otherwise it is skipped."""
@@ -196,6 +198,8 @@ def run_suite(
                 rows.append({"id": case.id, "kind": case.kind, "status": "skipped_budget",
                              "worst_case_usd": round(worst, 4), "spent_before_usd": round(spent, 6)})
                 continue
+        if pause_s > 0 and rows and rows[-1].get("requests"):
+            sleep(pause_s)  # stay under low per-minute quotas (e.g. a free tier) between live cases
         row = run_case(case, suite_dir, provider, settings)
         spent += row.get("estimated_cost_usd") or 0.0
         rows.append(row)
@@ -203,6 +207,7 @@ def run_suite(
         "suite": str(suite_dir),
         "mode": mode,
         "provider": provider.name,
+        "llm_provider": settings.provider,
         "models": {"generate": settings.model_generate, "grow": settings.model_grow},
         "effort": settings.effort,
         "prompt_version": PROMPT_VERSION,

@@ -22,7 +22,7 @@ def fake(monkeypatch):
 
     def install(script, **kw):
         holder["p"] = FakeProvider(script, **kw)
-        monkeypatch.setattr(cli, "make_provider", lambda: holder["p"])
+        monkeypatch.setattr(cli, "make_provider", lambda *_args, **_kwargs: holder["p"])
         return holder["p"]
 
     return install
@@ -115,3 +115,11 @@ def test_live_eval_refuses_to_run_without_a_spending_ceiling(tmp_path, fake, mod
     result = runner.invoke(cli.app, ["eval", "--suite", str(SUITE), "--mode", mode, "--out", str(tmp_path / "r.json")])
     assert result.exit_code == 2 and "--max-cost-usd" in result.output
     assert provider.calls == 0
+
+
+def test_gemini_selected_without_key_exits_2_and_needs_no_anthropic_key(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("MINDMAP_PROVIDER", "gemini")
+    doc = tmp_path / "doc.txt"
+    doc.write_text("text")
+    result = runner.invoke(cli.app, ["generate", "--in", str(doc), "--out", str(tmp_path / "m.json")])
+    assert result.exit_code == 2 and "GEMINI_API_KEY" in result.output and "ANTHROPIC" not in result.output

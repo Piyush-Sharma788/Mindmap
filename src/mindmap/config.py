@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 # --- Graph size ---------------------------------------------------------------
 GENERATE_MIN_NODES = 5  # spec: "5 to 9 nodes on first generation"
@@ -48,15 +49,41 @@ REQUEST_TIMEOUT_S = 180.0  # guessed: 16K output tokens at ~100 tok/s fits; slow
 RETRY_AFTER_MAX_S = 10.0  # guessed: honour short retry-after once; never block a CLI user for minutes
 RETRY_DEFAULT_WAIT_S = 1.0  # guessed: pause before the single retry when the server gives no hint
 
-DEFAULT_MODEL = "claude-sonnet-5-5"  # user decision (Phase 2): Sonnet 5.5 default
-DEFAULT_EFFORT = "medium"  # guessed: API default for Sonnet 5.5 is "high"; medium trades thinking for cost
+DEFAULT_PROVIDER = "anthropic"
+PROVIDER_DEFAULT_MODELS = {
+    "anthropic": "claude-sonnet-5-5",  # user decision (Phase 2)
+    "gemini": "gemini-3.6-flash",  # user decision (Phase 3): free-tier stable Flash model
+}
+DEFAULT_MODEL = PROVIDER_DEFAULT_MODELS[DEFAULT_PROVIDER]
+DEFAULT_EFFORT = "medium"  # guessed: Anthropic only (API default for Sonnet 5.5 is "high"); ignored by Gemini
 VALID_EFFORTS = ("low", "medium", "high", "xhigh", "max")
+
+
+def load_dotenv(path: Path) -> list[str]:
+    """Load KEY=VALUE lines from a .env file into os.environ, without overriding variables that
+    are already set. Returns the variable NAMES loaded; values are never logged or returned.
+    Disabled when MINDMAP_NO_DOTENV is set (the test suite sets it)."""
+    if os.environ.get("MINDMAP_NO_DOTENV") or not path.is_file():
+        return []
+    loaded = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.removeprefix("export ").strip()
+        value = value.strip().strip('"').strip("'")
+        if key and value and key not in os.environ:
+            os.environ[key] = value
+            loaded.append(key)
+    return loaded
 
 
 @dataclass(frozen=True)
 class Settings:
     """Runtime choices that may differ per environment. Read from env vars."""
 
+    provider: str = DEFAULT_PROVIDER
     model_generate: str = DEFAULT_MODEL
     model_grow: str = DEFAULT_MODEL
     effort: str | None = DEFAULT_EFFORT
@@ -65,7 +92,10 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
-        base = os.environ.get("MINDMAP_MODEL", DEFAULT_MODEL)
+        provider = os.environ.get("MINDMAP_PROVIDER", DEFAULT_PROVIDER).strip().lower()
+        if provider not in PROVIDER_DEFAULT_MODELS:
+            raise ValueError(f"MINDMAP_PROVIDER must be one of {sorted(PROVIDER_DEFAULT_MODELS)}")
+        base = os.environ.get("MINDMAP_MODEL") or PROVIDER_DEFAULT_MODELS[provider]
         effort = os.environ.get("MINDMAP_EFFORT", DEFAULT_EFFORT)
         if effort.lower() in ("", "none", "default"):
             effort_value: str | None = None  # omit -> provider default
@@ -74,6 +104,7 @@ class Settings:
         else:
             raise ValueError(f"MINDMAP_EFFORT must be one of {VALID_EFFORTS} or 'default'")
         return cls(
+            provider=provider,
             model_generate=os.environ.get("MINDMAP_MODEL_GENERATE", base),
             model_grow=os.environ.get("MINDMAP_MODEL_GROW", base),
             effort=effort_value,

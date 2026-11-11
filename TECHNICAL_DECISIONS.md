@@ -296,5 +296,22 @@ Each item is either a change from the Phase 1 design or a choice the design left
 7. **The sentence rule is a hard contract validator** with an abbreviation allow-list. Model output is normalised to its first sentence, and that change is logged, before the contract is applied.
 8. **Duplicate-detection normalisation (`label_key`)** removes case, accents and punctuation, and strips a trailing "s" on words longer than 3 letters. This can make different words match (for example "analysis" becomes "analysi", the same as a word that really ends in "analysi"). It applies equally to both sides of a comparison.
 
+## TD-23 Gemini provider for live evaluation — DECIDED (Phase 3, user decision)
+- **Why:** no Anthropic key is available. The user has a Google AI Studio free-tier key.
+- **Model:** `gemini-3.6-flash`.
+  - **Evidence** (aistudio.google.com/docs, checked 2026-11-11): listed as **stable**; "free of charge" for input and output on the free tier; 1,048,576 input and 65,536 output tokens; structured outputs and thinking supported.
+  - **Paid-tier price:** $0.75 / $3.75 per MTok through 2026-12-31, then $1.50 / $7.50.
+  - **Alternatives:** `gemini-3.8-flash` is newer but only labelled "New", so I preferred the stable model. `gemini-3-flash-preview` is a preview. `gemini-2.5-flash` is deprecated and will be rerouted on 2026-12-01.
+- **What stays the same:** the engine, the contract, the call budget and the tests. Only a second provider module was added.
+- **Schema adaptation:** a mechanical rewrite of nullable `anyOf` into `type: [X, "null"]`. A test checks that it is derived from `provider_schema` and changes nothing else.
+- **Limitations accepted:**
+  - Gemini ignores `minLength`/`maxLength` and does enforce `minItems`/`maxItems`. We send neither, so code still enforces every limit.
+  - Thinking is left at the model default; `effort` is Anthropic-only.
+  - Cached-token pricing is unverified, so it is charged at the full input price (conservative).
+  - Free-tier rate limits are not published for this model; they must be read from the user's AI Studio rate-limit page.
+  - Google may use free-tier content to improve its products.
+  - **Results from Gemini do not measure Claude.** Any model-choice conclusions must say which provider produced them.
+- **Retry rule change (applies to both providers):** a server-requested delay longer than `RETRY_AFTER_MAX_S` (10 s) is no longer slept and retried; the error is raised after one request. A retry that soon would only hit the same quota again.
+
 ## TD-22 Sentence segmentation — OPEN
 Use a regex splitter with no NLP dependency (keeps setup to one command). Its weaknesses with abbreviations, decimals and lists are accepted and will be listed as known bugs. Revisit only if the eval shows harm.

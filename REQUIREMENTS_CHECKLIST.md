@@ -164,3 +164,18 @@ Phase 2 notes:
 | AR-16 | No agent loop. A fixed DAG with a bounded repair step (TD-13) | AG-1, AG-2 | IN PROGRESS | APPROACH.md argument plus the call-budget tests |
 | AR-17 | Provider: Anthropic. Model per step from config. **Model choice pending the user and eval data** (TD-2) | MS-1, MS-2 | IN PROGRESS | Eval comparison table: model × effort → quality and cost |
 | AR-18 | Cost from real `usage` × a dated price table (TD-18) | COST-1, COST-2 | VERIFIED | Unit test of `cost()`. Eval output includes $ per operation |
+
+## K. Gemini provider (Phase 3, live-eval provider)
+
+| ID | Requirement | Crit | Status | Verification |
+|---|---|---|---|---|
+| GEM-1 | GeminiProvider uses the official `google-genai` SDK. It is the only module importing it, and the Anthropic provider is untouched | ⛔ | VERIFIED | `test_each_sdk_is_imported_in_exactly_one_module` |
+| GEM-2 | SDK retries disabled (`HttpRetryOptions(attempts=1)`), timeout set in ms | ⛔ | VERIFIED | `test_sdk_retries_disabled_and_timeout_in_ms` |
+| GEM-3 | Structured output uses the derived schema (with the nullable rewrite only) | ⛔ | VERIFIED | `test_request_uses_derived_schema...`, `test_gemini_schema_only_rewrites_nullable_anyof` |
+| GEM-4 | Usage read from `usage_metadata` (input excludes cached tokens; output includes thinking) | ● | VERIFIED (mocked) | `test_usage_text_and_metadata_mapping`. Real field values: BLOCKED (no live call) |
+| GEM-5 | Safety blocks, token limits and empty responses become stop reasons, never invented text | ⛔ | VERIFIED (mocked) | `test_finish_reasons_mapped_without_inventing_text` |
+| GEM-6 | 429 (with RetryInfo), auth, 4xx, 5xx, timeout and connection errors map to typed errors | ⛔ | VERIFIED (mocked) | `test_errors_mapped_to_typed_provider_errors` |
+| GEM-7 | Grow stays ≤ 2 requests with the Gemini provider | ⛔ | VERIFIED (mocked) | `test_grow_with_gemini_never_exceeds_two_requests` |
+| GEM-8 | `GEMINI_API_KEY` from env or `.env`. Values never printed. `.env` gitignored. No Anthropic key needed | ⛔ | VERIFIED | dotenv tests, `test_gemini_selected_without_key_exits_2...`, `git check-ignore .env` |
+| GEM-9 | The model works on the live API and returns valid structured output | ⛔ | BLOCKED | Needs the user's key and approval for a smoke test |
+| GEM-10 | Free-tier status of the user's project confirmed (no billing) | ⛔ | BLOCKED | The user checks AI Studio → Projects (tier) and the rate-limit page; it cannot be seen offline |

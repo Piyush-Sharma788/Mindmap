@@ -197,7 +197,15 @@ def test_unusable_output_stops_at_exactly_two_requests(script) -> None:
     assert len(info.value.usage) == 2
 
 
-@pytest.mark.parametrize("error", [ProviderRateLimited("429", retry_after_s=999), ProviderTimeout("t"),
+def test_rate_limit_longer_than_cap_is_not_retried() -> None:
+    provider = FakeProvider([ProviderRateLimited("429", retry_after_s=999)], repeat_last=True)
+    waits: list[float] = []
+    with pytest.raises(ProviderRateLimited):
+        grow(make_map(5), DOC2, provider, Settings(), sleep=waits.append)
+    assert provider.calls == 1 and waits == []  # retrying sooner would only hit the same limit
+
+
+@pytest.mark.parametrize("error", [ProviderRateLimited("429", retry_after_s=3), ProviderTimeout("t"),
                                    ProviderUnavailable("503")])
 def test_persistent_provider_errors_stop_at_exactly_two_requests(error) -> None:
     provider = FakeProvider([error], repeat_last=True)

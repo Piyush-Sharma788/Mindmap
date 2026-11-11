@@ -29,6 +29,13 @@ PRICES: dict[str, Price] = {
     "claude-sonnet-5-5": Price(2.00, 2.50, 0.10, 10.00),
     "claude-opus-5-5": Price(4.00, 5.00, 0.20, 20.00),
 }
+# Gemini: on the FREE tier nothing is billed. This row is the PAID-tier list price, so the
+# figure is a "paid-equivalent" estimate. Source: https://aistudio.google.com/docs/pricing,
+# checked 2026-11-11 (price valid through 2026-12-31; $1.50/$7.50 from 2027-01-01). Thinking is
+# billed as output. Cached-token price not verified: charged at the full input price (conservative).
+PRICES["gemini-3.6-flash"] = Price(0.75, 0.75, 0.75, 3.75)
+FREE_TIER_PROVIDERS = {"gemini": "Gemini free tier: $0 billed; estimates are paid-tier equivalents"}
+
 # Haiku 5.5 is priced by prompt length; a prompt over 100,000 tokens (input + cache reads/writes)
 # pays this card for the whole request. Our prompts are bounded far below it.
 HAIKU_LONG_PROMPT = ("claude-haiku-5-5", 100_000, Price(0.50, 0.625, 0.05, 2.50))

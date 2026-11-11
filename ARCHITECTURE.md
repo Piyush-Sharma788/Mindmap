@@ -172,6 +172,13 @@ class LLMProvider(Protocol):
 ```
 
 - **AnthropicProvider:** `anthropic.Anthropic(max_retries=0, timeout=REQUEST_TIMEOUT_S)`, structured outputs via `output_config.format` (or `messages.parse` with the wire model), and a typed exception chain (most specific first) mapped to `ProviderError` subtypes. It reads content blocks **by type**, because current models may return thinking blocks before the text. It checks `stop_reason` first: `refusal` → `ProviderError(Refused)` and `max_tokens` → `ModelOutputError(Truncated)`.
+- **GeminiProvider** (added in Phase 3, `llm/gemini_provider.py`) is the only module that imports `google-genai`. It sends one `models.generate_content` call per `complete()`, with:
+  - `HttpRetryOptions(attempts=1)`, so the SDK never retries;
+  - a timeout in milliseconds;
+  - JSON-schema output, using the same derived schema with nullable `anyOf` rewritten to `type: [X, "null"]`.
+  
+  It maps finish reasons onto the same stop reasons the engine already handles: `SAFETY`/`PROHIBITED_CONTENT`/... become `refusal`, `MAX_TOKENS` becomes `max_tokens`, and a blocked prompt becomes `refusal`. It maps API errors to the same typed errors, parsing the server's `RetryInfo` delay on a 429. Usage: `prompt_token_count` minus cached tokens is input; candidate tokens plus thinking tokens is output; cached tokens count as cache reads.
+- **Retry rule (both providers):** a retryable error is retried once, within the budget, only when the server's requested delay is at most `RETRY_AFTER_MAX_S`. A longer delay (typical of exhausted daily quotas) fails at once instead of spending the second request on another 429.
 - **Model per step** comes from config or environment variables (`MINDMAP_MODEL_GENERATE`, `MINDMAP_MODEL_GROW`), so changing provider or model never touches the services. A second provider means one more file that implements the protocol.
 - **Credentials:** the provider is never constructed in tests. The CLI constructs it lazily and turns a missing credential into `ConfigError` with exit code 2 *before* any file is written. The SDK also resolves `ant auth` profiles, so "no `ANTHROPIC_API_KEY`" does not always mean "no credentials". The error message mentions both.
 

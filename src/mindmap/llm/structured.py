@@ -85,7 +85,11 @@ def run_with_repair(
             if not exc.retryable or caller.budget.remaining == 0:
                 raise
             wait = exc.retry_after_s if exc.retry_after_s is not None else RETRY_DEFAULT_WAIT_S
-            sleep(min(max(wait, 0.0), RETRY_AFTER_MAX_S))
+            if wait > RETRY_AFTER_MAX_S:
+                # The provider says the limit lasts longer than we are willing to block: retrying
+                # sooner would only burn the second request (and free-tier quota) on another 429.
+                raise
+            sleep(max(wait, 0.0))
             continue  # resend the same request
 
         if response.stop_reason == "refusal":

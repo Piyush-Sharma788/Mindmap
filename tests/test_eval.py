@@ -116,3 +116,10 @@ def test_case_filter_and_unknown_ids(tmp_path) -> None:
     assert [c["id"] for c in result["cases"]] == ["w"]
     with pytest.raises(ConfigError):
         run_suite(suite, FakeProvider([]), Settings(), "live", case_ids=["nope"])
+
+
+def test_pause_between_live_cases(tmp_path) -> None:
+    suite = _suite(tmp_path)
+    waits: list[float] = []
+    run_suite(suite, FakeProvider([_dynamic], repeat_last=True), Settings(), "live", pause_s=5, sleep=waits.append)
+    assert waits == [5]  # two cases -> one pause between them
