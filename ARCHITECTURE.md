@@ -1,6 +1,8 @@
 # ARCHITECTURE — Visualli Mini Mindmap Engine
 
-> **Status: DESIGNED, not implemented, not tested.** Every number here is a design-time choice. Each one is labelled *spec* (given by the PDF), *reasoned* (derived from another constraint) or *guessed* (untested; it must be confirmed or revised by the eval in a later phase).
+> **Phase 2 status:** implemented and covered by offline tests, except `--trace`, `--debug-prompts` and `eval compare` (not built), and except anything needing a live model run (not yet done). Deviations are listed in TECHNICAL_DECISIONS.md under "Phase 2 implementation notes".
+>
+> **Original Phase 1 status: DESIGNED, not implemented, not tested.** Every number here is a design-time choice. Each one is labelled *spec* (given by the PDF), *reasoned* (derived from another constraint) or *guessed* (untested; it must be confirmed or revised by the eval in a later phase).
 > Requirements live in `PROJECT_CONTEXT.md`. Decision rationale lives in `TECHNICAL_DECISIONS.md`.
 
 ---

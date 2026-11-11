@@ -280,5 +280,21 @@ Generate reuses `select_passages` (no novelty term) with the same budget, for th
 - **Option B:** disable it in grow so that one request equals one model invocation, which removes any ambiguity. A refusal then costs a request slot.
 - Haiku 5.5 has no server-side fallback, so this question disappears if Haiku is chosen.
 
+## Phase 2 user decisions (2026-11-11)
+- **TD-2:** the default model is `claude-sonnet-5-5` for both steps. Haiku 5.5 is the cost comparison and Opus 5.5 the quality benchmark (evaluation only).
+- **TD-20:** the PDF is not committed. `*.pdf` is in `.gitignore`.
+- **TD-21:** no server-side refusal fallback anywhere. A refusal consumes a request slot.
+
+## Phase 2 implementation notes and deviations from the design
+Each item is either a change from the Phase 1 design or a choice the design left open.
+1. **A map with more than 25 nodes is rejected on load** (`InputError`), instead of "accepted but flagged" (TD-6). The contract enforces the ceiling for every map, which is simpler and matches the spec's ceiling. Trade-off: grow cannot take an over-ceiling map produced by another tool.
+2. **`effort = "medium"`** is set explicitly (guessed). The API default for Sonnet 5.5 is `high`, and adaptive thinking stays on. The eval has not yet checked quality at this setting.
+3. **The system prompt is marked for caching** (`cache_control` on the system block). Below the model's minimum cacheable size it silently does not cache. The benefit is unmeasured.
+4. **408 and 409 responses count as retryable**, matching the SDK's own retry classes, but they still use the single budgeted retry.
+5. **Not built, though the Phase 1 design mentions them:** the `--trace` flag (per-request usage is in `<out>.report.json` instead), `--debug-prompts`, and `eval compare`.
+6. **Contract models strip surrounding whitespace on load** (`str_strip_whitespace`). A loaded map whose labels have padding is normalised on load, so "survive" is checked against the normalised map.
+7. **The sentence rule is a hard contract validator** with an abbreviation allow-list. Model output is normalised to its first sentence, and that change is logged, before the contract is applied.
+8. **Duplicate-detection normalisation (`label_key`)** removes case, accents and punctuation, and strips a trailing "s" on words longer than 3 letters. This can make different words match (for example "analysis" becomes "analysi", the same as a word that really ends in "analysi"). It applies equally to both sides of a comparison.
+
 ## TD-22 Sentence segmentation — OPEN
 Use a regex splitter with no NLP dependency (keeps setup to one command). Its weaknesses with abbreviations, decimals and lists are accepted and will be listed as known bugs. Revisit only if the eval shows harm.
