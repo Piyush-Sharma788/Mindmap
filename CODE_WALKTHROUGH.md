@@ -1,6 +1,6 @@
 # Code Walkthrough
 
-A short map of the code for reading it end to end, or for changing it live. Line numbers are as of commit `4b3c16a`+ (Phase 6); search for the function name if they have drifted.
+A short map of the code for reading it end to end, or for changing it live. Line numbers were taken at Phase 6 (pre-rewrite commit `4b3c16a`; see HISTORY_REWRITE.md for its current hash); search for the function name if they have drifted.
 
 ## Files to open, in this order
 | # | File | Why |

@@ -123,7 +123,7 @@ Other docs that carry small Phase 8/9 wording updates (README, APPROACH, FINAL_R
 **Commit rules (per the author):**
 - the author's configured Git identity only;
 - **no AI names and no `Co-authored-by` trailers** in these or future commits;
-- AI assistance stays disclosed in APPROACH §14–15 (which also notes that the first 17 commits carry an AI trailer);
+- AI assistance stays disclosed in APPROACH §14–15. The original 17 commits' AI trailers were later removed by an author-approved history rewrite; see HISTORY_REWRITE.md;
 - before each commit: `make test` must show the counts above, and `git diff --cached --name-only` must match the list exactly.
 
 ## 8. Personal information still required
@@ -139,7 +139,7 @@ These can be filled before M3, or added as a fourth commit (`docs: add author co
 1. **Live evidence is n = 1, generate only (Gemini).** Grow (preservation, duplicate judgement, ≤ 2 requests, overflow) has **not** run on a real model. The documents say so; it remains the main scoring risk.
 2. The credential incident (§4): disclosed and remediated, but a literal reading of "at any point" may still be penalised.
 3. `INTERVIEW_PREPARATION.md`'s Phase 6 version stays in public history (§6).
-4. The first 17 commits carry an AI co-author trailer; later ones won't (disclosed).
+4. The original commits' AI co-author trailers were removed by an author-approved history rewrite and force-push (HISTORY_REWRITE.md). Commit hashes quoted in this report are pre-rewrite. AI assistance remains disclosed in APPROACH.md.
 5. Known engineering limits (APPROACH §12):
    - duplicates use candidate slots;
    - greedy admission is not guaranteed optimal; the lexical backstop misses paraphrases;
