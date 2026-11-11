@@ -81,3 +81,38 @@ def test_cassette_key_depends_on_prompt() -> None:
 )
 def test_lexical_matcher(aliases, texts, hit) -> None:
     assert match_concepts_lexically([aliases], texts) == [hit]
+
+
+class _PricedFake(FakeProvider):
+    """Reports fixed usage per request so the spending ceiling can be exercised offline."""
+
+    def complete(self, request):
+        from dataclasses import replace
+
+        from mindmap.llm.base import Usage
+
+        response = super().complete(request)
+        return replace(response, usage=Usage(input_tokens=20_000, output_tokens=10_000))
+
+
+def test_spending_ceiling_skips_cases_whose_worst_case_would_exceed_it(tmp_path) -> None:
+    suite = _suite(tmp_path)
+    cases = json.loads((suite / "cases.json").read_text())
+    cases["cases"].append(dict(cases["cases"][0], id="g2"))
+    (suite / "cases.json").write_text(json.dumps(cases))
+    # Each request costs 20K*$2 + 10K*$10 per MTok = $0.14; worst case per case = 2 x $0.24 = $0.48.
+    result = run_suite(suite, _PricedFake([_dynamic], repeat_last=True), Settings(), "live", max_cost_usd=0.70)
+    statuses = [c["status"] for c in result["cases"]]
+    assert statuses == ["ok", "ok", "skipped_budget"]  # 0.28 spent + 0.48 worst > 0.70
+    assert result["aggregate"]["estimated_cost_usd_total"] == pytest.approx(0.28)
+    assert result["aggregate"]["estimated_cost_usd_total"] <= 0.70
+
+
+def test_case_filter_and_unknown_ids(tmp_path) -> None:
+    from mindmap.errors import ConfigError
+
+    suite = _suite(tmp_path)
+    result = run_suite(suite, FakeProvider([_dynamic], repeat_last=True), Settings(), "live", case_ids=["w"])
+    assert [c["id"] for c in result["cases"]] == ["w"]
+    with pytest.raises(ConfigError):
+        run_suite(suite, FakeProvider([]), Settings(), "live", case_ids=["nope"])

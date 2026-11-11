@@ -107,3 +107,11 @@ def test_eval_replay_on_shipped_suite_runs_offline(tmp_path) -> None:
     assert statuses["grow-empty-document"] == "error"  # expected InputError, no request needed
     assert all(s == "not_recorded" for k, s in statuses.items() if k != "grow-empty-document")
     assert data["aggregate"]["expected_errors_matched"] == 1.0
+
+
+@pytest.mark.parametrize("mode", ["live", "record"])
+def test_live_eval_refuses_to_run_without_a_spending_ceiling(tmp_path, fake, mode) -> None:
+    provider = fake([])
+    result = runner.invoke(cli.app, ["eval", "--suite", str(SUITE), "--mode", mode, "--out", str(tmp_path / "r.json")])
+    assert result.exit_code == 2 and "--max-cost-usd" in result.output
+    assert provider.calls == 0

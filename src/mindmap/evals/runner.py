@@ -16,14 +16,15 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from mindmap.config import GROW_MAX_CALLS, MAX_NODES, Settings
+from mindmap.config import GENERATE_MAX_CALLS, GROW_MAX_CALLS, MAX_NODES, Settings
 from mindmap.contract import check_generate_size, load_mindmap
-from mindmap.errors import MindmapError
+from mindmap.errors import ConfigError, MindmapError
 from mindmap.evals import metrics as M
 from mindmap.generate import generate
 from mindmap.grow import grow
 from mindmap.llm.base import LLMProvider
 from mindmap.llm.cassette import CassetteMissing
+from mindmap.pricing import worst_case_request_usd
 from mindmap.prompts import PROMPT_VERSION
 
 Mode = Literal["replay", "record", "live"]
@@ -69,7 +70,10 @@ def run_case(case: Case, suite_dir: Path, provider: LLMProvider, settings: Setti
         return row
     except MindmapError as exc:
         usage = getattr(exc, "usage", [])
-        row.update(status="error", error=type(exc).__name__, requests=len(usage),
+        row.update(status="error", error=type(exc).__name__, error_message=str(exc)[:300],
+                   requests=len(usage), outcomes=[u.outcome for u in usage],
+                   latency_ms_total=round(sum(u.latency_ms for u in usage)),
+                   estimated_cost_usd=round(sum(u.estimated_cost_usd or 0 for u in usage), 6),
                    expected_error_matched=(case.expect_error == type(exc).__name__))
         return row
     row["wall_ms"] = round((time.perf_counter() - started) * 1000)
@@ -82,6 +86,8 @@ def run_case(case: Case, suite_dir: Path, provider: LLMProvider, settings: Setti
     usage = result.usage_summary
     row.update(
         requests=usage.requests,
+        outcomes=[u.outcome for u in result.usage],
+        latency_ms_total=round(sum(u.latency_ms for u in result.usage)),
         first_pass_ok=len(result.usage) == 1 and result.usage[0].outcome == "ok",
         repairs=len(result.repairs),
         nodes=len(m.nodes),
@@ -126,7 +132,6 @@ def aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
     gen = [r for r in scored if r["kind"] == "generate"]
     grw = [r for r in scored if r["kind"] == "grow"]
     expected_errors = [r for r in rows if "expected_error_matched" in r]
-    costs = [r.get("estimated_cost_usd") for r in scored]
     return {
         "cases_total": len(rows),
         "cases_scored": len(scored),
@@ -143,15 +148,57 @@ def aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "grow_max_requests": max((r["requests"] for r in grw), default=None),
         "grow_accounting_ok_rate": M.mean(r["accounting_ok"] for r in grw),
         "injection_followed_rate": M.mean(r.get("injection_followed") for r in scored),
-        "estimated_cost_usd_total": round(sum(c for c in costs if c is not None), 6) if scored else None,
+        "cases_skipped_budget": sum(r.get("status") == "skipped_budget" for r in rows),
+        "requests_total": sum(r.get("requests", 0) for r in rows),
+        "mean_latency_ms_per_case": M.mean(r.get("latency_ms_total") for r in scored),
+        "max_latency_ms_per_case": max((r["latency_ms_total"] for r in scored), default=None),
+        "estimated_cost_usd_total": round(sum(r.get("estimated_cost_usd") or 0 for r in rows), 6),
         "estimated_cost_usd_mean_generate": M.mean(r.get("estimated_cost_usd") for r in gen),
         "estimated_cost_usd_mean_grow": M.mean(r.get("estimated_cost_usd") for r in grw),
     }
 
 
-def run_suite(suite_dir: Path, provider: LLMProvider, settings: Settings, mode: Mode) -> dict[str, Any]:
+def case_worst_case_usd(case: Case, settings: Settings) -> float | None:
+    """Upper bound on what one case can cost: its full request budget at worst-case size."""
+    if case.kind == "generate":
+        per_request = worst_case_request_usd(settings.model_generate, settings.max_output_tokens)
+        return None if per_request is None else GENERATE_MAX_CALLS * per_request
+    per_request = worst_case_request_usd(settings.model_grow, settings.max_output_tokens)
+    return None if per_request is None else GROW_MAX_CALLS * per_request
+
+
+def run_suite(
+    suite_dir: Path,
+    provider: LLMProvider,
+    settings: Settings,
+    mode: Mode,
+    *,
+    max_cost_usd: float | None = None,
+    case_ids: list[str] | None = None,
+) -> dict[str, Any]:
+    """Run the suite. With `max_cost_usd`, a case runs only if (spent so far, from provider-reported
+    usage) + (that case's worst-case cost) stays within the ceiling; otherwise it is skipped."""
     suite = load_suite(suite_dir)
-    rows = [run_case(case, suite_dir, provider, settings) for case in suite.cases]
+    cases = suite.cases
+    if case_ids:
+        unknown = set(case_ids) - {c.id for c in cases}
+        if unknown:
+            raise ConfigError(f"unknown case ids: {sorted(unknown)}")
+        cases = [c for c in cases if c.id in case_ids]
+    spent = 0.0
+    rows: list[dict[str, Any]] = []
+    for case in cases:
+        if max_cost_usd is not None:
+            worst = case_worst_case_usd(case, settings)
+            if worst is None:
+                raise ConfigError("no list price for the configured model; cannot enforce --max-cost-usd")
+            if spent + worst > max_cost_usd:
+                rows.append({"id": case.id, "kind": case.kind, "status": "skipped_budget",
+                             "worst_case_usd": round(worst, 4), "spent_before_usd": round(spent, 6)})
+                continue
+        row = run_case(case, suite_dir, provider, settings)
+        spent += row.get("estimated_cost_usd") or 0.0
+        rows.append(row)
     return {
         "suite": str(suite_dir),
         "mode": mode,
@@ -159,6 +206,7 @@ def run_suite(suite_dir: Path, provider: LLMProvider, settings: Settings, mode: 
         "models": {"generate": settings.model_generate, "grow": settings.model_grow},
         "effort": settings.effort,
         "prompt_version": PROMPT_VERSION,
+        "max_cost_usd": max_cost_usd,
         "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "note": "tokens are provider-reported (replay: as recorded); cost is an estimate from list prices",
         "aggregate": aggregate(rows),

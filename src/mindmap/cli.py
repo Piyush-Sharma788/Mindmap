@@ -168,6 +168,9 @@ def eval_cmd(
     suite: Path = typer.Option(Path("evals"), "--suite", help="Suite directory containing cases.json."),
     mode: str = typer.Option("replay", "--mode", help="replay (offline) | record (live, saves) | live"),
     out: Path | None = typer.Option(None, "--out", help="Results JSON (default: <suite>/results/...)."),
+    max_cost_usd: float | None = typer.Option(
+        None, "--max-cost-usd", help="Spending ceiling (USD, estimated from reported usage). Required for live/record."),
+    cases: str | None = typer.Option(None, "--cases", help="Comma-separated case ids to run (default: all)."),
 ) -> None:
     """Run the eval suite and write a results JSON."""
     from mindmap.evals.runner import run_suite
@@ -178,6 +181,8 @@ def eval_cmd(
             raise InputError("--mode must be replay, record or live")
         if not (suite / "cases.json").is_file():
             raise InputError(f"{suite}/cases.json not found")
+        if mode != "replay" and (max_cost_usd is None or max_cost_usd <= 0):
+            raise ConfigError("--max-cost-usd is required (and > 0) for live and record modes")
         settings = _settings()
         cassettes = suite / "cassettes"
         if mode == "replay":
@@ -186,13 +191,16 @@ def eval_cmd(
             provider = RecordingProvider(make_provider(), cassettes)
         else:
             provider = make_provider()
-        results = run_suite(suite, provider, settings, mode)  # type: ignore[arg-type]
+        case_ids = [c.strip() for c in cases.split(",") if c.strip()] if cases else None
+        results = run_suite(suite, provider, settings, mode, max_cost_usd=max_cost_usd,  # type: ignore[arg-type]
+                            case_ids=case_ids)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         target = out or suite / "results" / f"{stamp}-{mode}-{settings.model_generate}.json"
         _write_atomic(target, json.dumps(results, indent=2) + "\n")
         agg = results["aggregate"]
         typer.echo(f"eval ({mode}): {agg['cases_scored']}/{agg['cases_total']} scored, "
-                   f"{agg['cases_not_recorded']} not recorded, {agg['cases_errored']} errored -> {target}", err=True)
+                   f"{agg['cases_not_recorded']} not recorded, {agg['cases_errored']} errored, "
+                   f"{agg['cases_skipped_budget']} skipped (budget) -> {target}", err=True)
         for key, value in agg.items():
             typer.echo(f"  {key}: {value}", err=True)
 

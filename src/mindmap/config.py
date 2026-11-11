@@ -24,7 +24,7 @@ assert GROW_MAX_CALLS <= 2, "assignment hard limit"
 
 # --- Input bounding -----------------------------------------------------------------
 MAX_INPUT_BYTES = 5_000_000  # guessed: bounds CPU/memory of passage selection; larger is rejected
-EXCERPT_MAX_CHARS = 24_000  # guessed: ~6K tokens; a ~4,000-word article passes verbatim
+EXCERPT_MAX_CHARS = 24_000  # guessed: ~10K tokens at ~2.5 chars/token; a ~4,000-word article passes verbatim
 SEGMENT_MAX_CHARS = 600  # guessed: hard-split run-on "sentences" (e.g. text with no punctuation)
 NOVELTY_WEIGHT = 0.5  # guessed: down-weights sentences already covered by the map, never zeroes them
 
