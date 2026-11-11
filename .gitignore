@@ -1,0 +1,28 @@
+# Credentials: never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# The assignment PDF is deliberately not committed (decision TD-20)
+*.pdf
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local outputs
+out/
+*.trace.json
+.DS_Store
