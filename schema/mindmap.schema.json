@@ -1,0 +1,93 @@
+{
+  "$defs": {
+    "MindmapConnection": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "description": "Source node id.",
+          "title": "From",
+          "type": "string"
+        },
+        "label": {
+          "description": "Relationship from source to target, 1-4 words, e.g. 'causes', 'part of'.",
+          "title": "Label",
+          "type": "string"
+        },
+        "to": {
+          "description": "Target node id.",
+          "title": "To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "label"
+      ],
+      "title": "MindmapConnection",
+      "type": "object"
+    },
+    "MindmapNode": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Stable node id, unique within the mindmap.",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "description": "Short node label: 1-4 words, at most 40 characters.",
+          "title": "Label",
+          "type": "string"
+        },
+        "summary": {
+          "description": "Exactly one sentence, at most 250 characters, explaining the node.",
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "summary"
+      ],
+      "title": "MindmapNode",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "connections": {
+      "items": {
+        "$ref": "#/$defs/MindmapConnection"
+      },
+      "title": "Connections",
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "$ref": "#/$defs/MindmapNode"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "rootId": {
+      "description": "Stable node id, unique within the mindmap.",
+      "title": "Rootid",
+      "type": "string"
+    },
+    "title": {
+      "description": "Title of the whole mindmap, at most 80 characters.",
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "rootId",
+    "nodes",
+    "connections"
+  ],
+  "title": "Mindmap",
+  "type": "object"
+}
