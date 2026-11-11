@@ -123,3 +123,18 @@ def test_gemini_selected_without_key_exits_2_and_needs_no_anthropic_key(tmp_path
     doc.write_text("text")
     result = runner.invoke(cli.app, ["generate", "--in", str(doc), "--out", str(tmp_path / "m.json")])
     assert result.exit_code == 2 and "GEMINI_API_KEY" in result.output and "ANTHROPIC" not in result.output
+
+
+def test_eval_pipeline_mode_runs_offline(tmp_path) -> None:
+    out = tmp_path / "bench.json"
+    result = runner.invoke(cli.app, ["eval", "--mode", "pipeline", "--out", str(out)])
+    assert result.exit_code == 0, result.output
+    assert json.loads(out.read_text())["grow_fuzz"]["preserved_rate"] == 1.0
+
+
+def test_errors_carry_actionable_hints(tmp_path, fake) -> None:
+    doc = tmp_path / "doc.txt"
+    doc.write_text("text")
+    fake(["garbage", "garbage"])
+    result = runner.invoke(cli.app, ["generate", "--in", str(doc), "--out", str(tmp_path / "m.json")])
+    assert result.exit_code == 5 and "hint:" in result.output

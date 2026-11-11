@@ -1,0 +1,60 @@
+{
+  "kind": "pipeline (deterministic, scripted model output; NOT a model-quality measurement)",
+  "selection": {
+    "report_36k": {
+      "topic_retention": 1.0,
+      "appendix_share_of_excerpt": 0.2806,
+      "excerpt_chars": 22562,
+      "within_budget": true
+    },
+    "report_63k": {
+      "topic_retention": 1.0,
+      "appendix_share_of_excerpt": 0.0442,
+      "excerpt_chars": 22968,
+      "within_budget": true
+    },
+    "report_107k": {
+      "topic_retention": 1.0,
+      "appendix_share_of_excerpt": 0.0052,
+      "excerpt_chars": 23444,
+      "within_budget": true
+    }
+  },
+  "dedup_backstop": {
+    "variant_catch_rate": 0.8667,
+    "missed_variants": [
+      "Bus / Buses",
+      "Analysis / Analyses"
+    ],
+    "false_merge_rate": 0.0,
+    "false_merges": []
+  },
+  "grow_fuzz": {
+    "valid_rate": 1.0,
+    "preserved_rate": 1.0,
+    "within_ceiling_rate": 1.0,
+    "accounted_rate": 1.0,
+    "reasons_ok_rate": 1.0,
+    "requests_le_2_rate": 1.0,
+    "optimal_rate": 1.0,
+    "variant_duplicate_catch_rate": 1.0,
+    "admitted_value_vs_optimum_mean": 1.0,
+    "admitted_value_vs_optimum_min": 1.0,
+    "runs": 400
+  },
+  "generate_fuzz": {
+    "runs": 300,
+    "valid_map_rate": 0.9233,
+    "explicit_error_rate": 0.0767,
+    "invalid_map_returned": 0,
+    "runs_over_2_requests": 0
+  },
+  "injection": {
+    "prompts_checked": 20,
+    "delimiter_integrity_rate": 1.0
+  },
+  "render_fuzz": {
+    "maps_rendered": 300,
+    "all_lines_allowed_rate": 1.0
+  }
+}

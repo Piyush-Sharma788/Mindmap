@@ -31,6 +31,15 @@ from mindmap.observability import setup_logging
 app = typer.Typer(no_args_is_help=True, add_completion=False, help="Mini mindmap engine.")
 T = TypeVar("T")
 
+HINTS: list[tuple[type[MindmapError], str]] = [
+    (ConfigError, "hint: copy .env.example to .env and set the key for MINDMAP_PROVIDER (anthropic|gemini)"),
+    (ProviderError, "hint: provider-side failure; nothing was written. Rate limits/quotas: wait and retry, "
+                    "or check your provider's usage page"),
+    (ModelOutputError, "hint: the model output was unusable twice; nothing was written. Try again or another model"),
+    (CallBudgetExceeded, "this is a bug: please report it with the --verbose log"),
+    (InvariantViolation, "this is a bug: please report it with the --verbose log"),
+]
+
 EXIT_CODES: list[tuple[type[MindmapError], int]] = [
     (ConfigError, 2),
     (InputError, 3),
@@ -95,6 +104,9 @@ def _run(fn: Callable[[], T]) -> T:
         usage = getattr(exc, "usage", None)
         if usage:
             typer.echo(f"  requests made: {len(usage)} ({', '.join(u.outcome for u in usage)})", err=True)
+        hint = next((h for cls, h in HINTS if isinstance(exc, cls)), None)
+        if hint:
+            typer.echo(f"  {hint}", err=True)
         raise typer.Exit(code) from None
 
 
@@ -172,7 +184,8 @@ def render_cmd(
 @app.command("eval")
 def eval_cmd(
     suite: Path = typer.Option(Path("evals"), "--suite", help="Suite directory containing cases.json."),
-    mode: str = typer.Option("replay", "--mode", help="replay (offline) | record (live, saves) | live"),
+    mode: str = typer.Option(
+        "replay", "--mode", help="pipeline (offline bench) | replay (offline) | record (live, saves) | live"),
     out: Path | None = typer.Option(None, "--out", help="Results JSON (default: <suite>/results/...)."),
     max_cost_usd: float | None = typer.Option(
         None, "--max-cost-usd", help="Spending ceiling (USD, estimated from reported usage). Required for live/record."),
@@ -184,8 +197,21 @@ def eval_cmd(
     from mindmap.llm.cassette import RecordingProvider, ReplayProvider
 
     def work() -> None:
+        if mode == "pipeline":
+            from mindmap.evals.pipeline import run_pipeline_bench
+
+            results = run_pipeline_bench()
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            target = out or suite / "results" / f"{stamp}-pipeline.json"
+            _write_atomic(target, json.dumps(results, indent=2) + "\n")
+            typer.echo(f"pipeline bench (deterministic, no model) -> {target}", err=True)
+            g = results["grow_fuzz"]
+            typer.echo(f"  grow: valid={g['valid_rate']} preserved={g['preserved_rate']} "
+                       f"accounted={g['accounted_rate']} value_vs_optimum_min={g['admitted_value_vs_optimum_min']}",
+                       err=True)
+            return
         if mode not in ("replay", "record", "live"):
-            raise InputError("--mode must be replay, record or live")
+            raise InputError("--mode must be pipeline, replay, record or live")
         if not (suite / "cases.json").is_file():
             raise InputError(f"{suite}/cases.json not found")
         if mode != "replay" and (max_cost_usd is None or max_cost_usd <= 0):
