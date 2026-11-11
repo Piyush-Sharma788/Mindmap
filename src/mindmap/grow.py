@@ -22,8 +22,8 @@ from mindmap.llm.base import LLMProvider
 from mindmap.llm.budget import BudgetedCaller, CallBudget
 from mindmap.llm.structured import parse_json_model, run_with_repair
 from mindmap.observability import UsageRecord, UsageSummary, summarize
-from mindmap.prompts import GROW_SYSTEM, PROMPT_VERSION, grow_user_message
-from mindmap.ranking import Admission, admit, rank
+from mindmap.prompts import neutralise, GROW_SYSTEM, PROMPT_VERSION, grow_user_message
+from mindmap.ranking import Admission, admit
 from mindmap.textprep import ExcerptStats, load_document, select_passages
 from mindmap.wire import GrowProposal, provider_schema
 
@@ -61,7 +61,9 @@ def grow(
 ) -> GrowResult:
     settings = settings or Settings()
     existing = Mindmap.model_validate(existing.model_dump(by_alias=True))  # re-validate untrusted input
-    text = load_document(document if isinstance(document, bytes) else document.encode("utf-8"))
+    # Neutralise delimiter tags BEFORE selection so the excerpt budget is measured on the exact
+    # text that is sent (neutralising lengthens each tag by 3 chars).
+    text = neutralise(load_document(document if isinstance(document, bytes) else document.encode("utf-8")))
     capacity = MAX_NODES - len(existing.nodes)
     excerpt = select_passages(
         text, novelty_against=[n.label for n in existing.nodes] + [n.summary for n in existing.nodes]
@@ -91,7 +93,7 @@ def grow(
     fresh, duplicates, dup_target = split_duplicates(prepared, existing, notes)
     existing_ids = existing.node_ids()
     admissions, omitted_rank = admit(
-        rank(fresh, existing_ids), existing_ids=existing_ids, root_id=existing.rootId,
+        fresh, existing_ids=existing_ids, root_id=existing.rootId,
         capacity=capacity, dup_target=dup_target, notes=notes,
     )
     omitted += omitted_rank

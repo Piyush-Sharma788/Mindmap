@@ -63,7 +63,8 @@ Return candidate nodes for concepts in the new document:
 
 {_SECURITY_RULES}"""
 
-_TAG_PATTERN = re.compile(r"<(/?)\s*(document|existing_map)", re.IGNORECASE)
+# Whitespace is allowed before AND after the slash ("< /document", "<  /  document").
+_TAG_PATTERN = re.compile(r"<\s*(/?)\s*(document|existing_map)", re.IGNORECASE)
 
 
 def neutralise(text: str) -> str:

@@ -19,7 +19,7 @@ from mindmap.config import MAX_CANDIDATES
 from mindmap.contract import Mindmap
 from mindmap.wire import GrowProposal
 
-OmitReason = Literal["ceiling", "parent_omitted", "invalid", "over_candidate_limit"]
+OmitReason = Literal["ceiling", "invalid", "over_candidate_limit"]
 
 
 class Duplicate(BaseModel):

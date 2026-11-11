@@ -126,3 +126,19 @@ def test_committed_schema_file_matches_contract() -> None:
         "schema/mindmap.schema.json drifted: regenerate with "
         "`python -m mindmap.contract > schema/mindmap.schema.json`"
     )
+
+
+@pytest.mark.parametrize(
+    "a, b, same",
+    [
+        ("Calvin Cycle", "The Calvin Cycle", True), ("Bus Lane", "Bus Lanes", True), ("Bus", "Buses", False), ("Office Lease", "Office Leases", True),
+        ("Immune Response", "Immune Responses", True),
+        ("Battery", "Batteries", True), ("Process", "Processes", True), ("Café", "Cafe", True),
+        ("Machine Learning", "Machine Learning Ethics", False), ("C3 Plants", "C4 Plants", False),
+        ("Glass", "Gas", False), ("The", "The", True), ("A", "An", False),
+    ],
+)
+def test_label_key_precision(a, b, same) -> None:
+    from mindmap.assemble import label_key
+
+    assert (label_key(a) == label_key(b)) is same

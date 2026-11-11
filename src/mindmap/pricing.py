@@ -34,7 +34,6 @@ PRICES: dict[str, Price] = {
 # checked 2026-11-11 (price valid through 2026-12-31; $1.50/$7.50 from 2027-01-01). Thinking is
 # billed as output. Cached-token price not verified: charged at the full input price (conservative).
 PRICES["gemini-3.6-flash"] = Price(0.75, 0.75, 0.75, 3.75)
-FREE_TIER_PROVIDERS = {"gemini": "Gemini free tier: $0 billed; estimates are paid-tier equivalents"}
 
 # Haiku 5.5 is priced by prompt length; a prompt over 100,000 tokens (input + cache reads/writes)
 # pays this card for the whole request. Our prompts are bounded far below it.

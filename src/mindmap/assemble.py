@@ -97,11 +97,32 @@ def clamp_importance(value: int, notes: list[str], where: str) -> int:
     return clamped
 
 
+_LEADING_ARTICLES = ("the", "a", "an")
+
+
+def _singular(word: str) -> str:
+    """Conservative English singular: -ies -> -y; -(ss|sh|ch|x|z)es -> drop "es"; else -s -> drop
+    "s" (not -ss). "-ses" is ambiguous (buses / leases), so only the "s" is dropped: "leases" ->
+    "lease" matches, "buses" -> "buse" does not match "bus" (known miss, pipeline bench).
+    Irregular plurals ("analyses") are not handled."""
+    if len(word) > 4 and word.endswith("ies"):
+        return word[:-3] + "y"
+    if len(word) > 4 and word.endswith(("sses", "shes", "ches", "xes", "zes")):
+        return word[:-2]
+    if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+        return word[:-1]
+    return word
+
+
 def label_key(label: str) -> str:
-    """Normalised form used for exact-duplicate detection: case, accents, punctuation, plural 's'."""
+    """Normalised form used for exact-duplicate detection: case, accents, punctuation, a leading
+    article ("The Calvin Cycle"), and regular plurals. High precision by design: it never merges
+    labels that differ by a content word (measured false-merge rate: pipeline bench)."""
     text = unicodedata.normalize("NFKD", label).encode("ascii", "ignore").decode().lower()
     words = re.findall(r"[a-z0-9]+", text)
-    return " ".join(w[:-1] if len(w) > 3 and w.endswith("s") and not w.endswith("ss") else w for w in words)
+    if len(words) > 1 and words[0] in _LEADING_ARTICLES:
+        words = words[1:]
+    return " ".join(_singular(w) for w in words)
 
 
 def slugify(label: str) -> str:

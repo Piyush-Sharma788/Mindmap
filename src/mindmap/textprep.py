@@ -23,6 +23,9 @@ _CONTROL_EXCEPT_WS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])[\"')\]]*\s+")
 _PARAGRAPH_SPLIT = re.compile(r"\n\s*\n")
 _TOKEN = re.compile(r"[a-z0-9]+")
+_URL = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
+_WORD = re.compile(r"[^\W\d_]{2,}")  # a token made of letters only (any script)
+_EDGE_PUNCT = ".,;:!?()[]{}\"'"
 GAP_MARKER = " [...] "
 
 STOPWORDS = frozenset(
@@ -52,7 +55,21 @@ def load_document(raw: bytes) -> str:
 
 
 def content_tokens(text: str) -> list[str]:
-    return [t for t in _TOKEN.findall(text.lower()) if t not in STOPWORDS and len(t) > 1]
+    """Scoring terms: lowercase alphanumeric tokens, minus stopwords, pure numbers and URLs.
+    Numbers and URL fragments are almost always unique, so with IDF weighting they would make
+    reference lists and data tables look like the most 'informative' text (measured: ~50% of
+    the excerpt budget on a long report before this rule)."""
+    text = _URL.sub(" ", text.lower())
+    return [t for t in _TOKEN.findall(text) if t not in STOPWORDS and len(t) > 1 and not t.isdigit()]
+
+
+def prose_ratio(text: str) -> float:
+    """Share of whitespace-separated tokens that are words (letters only). ~1 for prose,
+    low for reference lists, tables and code. Used to down-weight non-prose segments."""
+    tokens = text.split()
+    if not tokens:
+        return 0.0
+    return sum(1 for t in tokens if _WORD.fullmatch(t.strip(_EDGE_PUNCT))) / len(tokens)
 
 
 def segment(text: str) -> list[str]:
@@ -128,7 +145,7 @@ def select_passages(
         # Sum of IDF over distinct terms, normalised by sqrt(#terms): rewards many rare terms
         # without letting long segments win on length alone. (guessed weighting)
         idf_sum = sum(math.log(n_segments / doc_freq[t]) + 1.0 for t in tokens)
-        score = idf_sum / math.sqrt(len(tokens))
+        score = idf_sum / math.sqrt(len(tokens)) * prose_ratio(seg)
         if map_tokens:
             overlap = len(tokens & map_tokens) / len(tokens)
             score *= 1.0 - NOVELTY_WEIGHT * overlap

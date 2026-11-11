@@ -15,7 +15,7 @@ from mindmap.llm.base import LLMProvider
 from mindmap.llm.budget import BudgetedCaller, CallBudget
 from mindmap.llm.structured import parse_json_model, run_with_repair
 from mindmap.observability import UsageRecord, UsageSummary, summarize
-from mindmap.prompts import GENERATE_SYSTEM, PROMPT_VERSION, generate_user_message
+from mindmap.prompts import neutralise, GENERATE_SYSTEM, PROMPT_VERSION, generate_user_message
 from mindmap.textprep import ExcerptStats, load_document, select_passages
 from mindmap.wire import GenerateProposal, provider_schema
 
@@ -38,7 +38,9 @@ def generate(
     sleep: Callable[[float], None] = time.sleep,
 ) -> GenerateResult:
     settings = settings or Settings()
-    text = load_document(document if isinstance(document, bytes) else document.encode("utf-8"))
+    # Neutralise delimiter tags BEFORE selection so the excerpt budget is measured on the exact
+    # text that is sent (neutralising lengthens each tag by 3 chars).
+    text = neutralise(load_document(document if isinstance(document, bytes) else document.encode("utf-8")))
     excerpt = select_passages(text)
     caller = BudgetedCaller(provider, CallBudget(GENERATE_MAX_CALLS))
 
