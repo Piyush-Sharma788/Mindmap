@@ -81,6 +81,11 @@ Rebuilt offline from the recorded response, with no extra API call. Saved as `ev
   - run-to-run variability (one sample);
   - any Anthropic behaviour.
 
+## 4.5 Offline re-verification (Phase 9, no API calls)
+- Replaying the cassette with `MINDMAP_PROVIDER=gemini`, all sockets blocked and `.env` loading disabled reproduces the live result **exactly on 11 metrics**: requests, outcomes, nodes, validity, connectivity, first-pass, repairs, input and output tokens, estimated cost, recall. There were 0 network attempts.
+- **Latency is not reproduced:** replay reports 0 ms, because cassettes don't store latency. The 10,982 ms figure above comes from the live run only.
+- With the default provider (Anthropic) replay reports every case as `not_recorded`, as designed. A test (`tests/test_offline_guarantees.py`) checks that replay and the pipeline bench never construct a real provider.
+
 ## 5. Findings that correct earlier estimates
 - **Input tokens were much lower than estimated.** APPROACH §7 estimated ~1.6K input tokens for generate (characters ÷ 2.5, Anthropic's tokenizer ratio, *including* the 1.5K-character schema). Gemini reported **563**, about 4.5 characters per token on the prompt text alone. The JSON schema appears not to be billed as ordinary input here. That's an inference from one sample.
 - **Output dominates cost.** About 94% of the paid-equivalent cost was output, consistent with the "thinking drives cost" expectation. Gemini thinking was left at the model default, and lowering it is the obvious lever. Its quality impact is unmeasured.
