@@ -202,3 +202,12 @@ Phase 2 notes:
 | P5-3 | Live Gemini smoke test (Step A) and full run (Step B) | BLOCKED | Needs `GEMINI_API_KEY`, free-tier confirmation and approval |
 | P5-4 | Clean clone: setup + offline tests + CLI examples | VERIFIED | See the Phase 5 report: clean clone, `make setup`, `make test`, CLI smoke |
 | P5-5 | No credentials in history; no unneeded generated files tracked | VERIFIED | `git log -p` secret scan; `git ls-files` review |
+
+## N. Phase 6: ownership and final audit
+
+| ID | Item | Status | Evidence |
+|---|---|---|---|
+| P6-1 | Code walkthrough with exact file:line references | IMPLEMENTED | CODE_WALKTHROUGH.md (line references checked against the source index) |
+| P6-2 | Interview preparation: 20 Q&A, trade-offs, 5 exercises | IMPLEMENTED | INTERVIEW_PREPARATION.md; exercises 1–3 trial-run on a scratch clone (outcomes recorded), 4–5 not trial-run |
+| P6-3 | Audit found no new functional defect; no code changed in Phase 6 | VERIFIED | `git diff` of Phase 6 touches only docs |
+| P6-4 | The author's review % and hands-on time | BLOCKED (author) | Placeholders in APPROACH §14–15 |

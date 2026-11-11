@@ -2,7 +2,7 @@
 
 A library and thin CLI that turns a document into a small concept mindmap (`generate`) and grows an existing map with a second document (`grow`). Grow uses **at most 2 LLM requests**, whatever the document length, and the map holds **at most 25 nodes**.
 
-Design: [ARCHITECTURE.md](ARCHITECTURE.md). Decisions and trade-offs: [TECHNICAL_DECISIONS.md](TECHNICAL_DECISIONS.md). Requirement status: [REQUIREMENTS_CHECKLIST.md](REQUIREMENTS_CHECKLIST.md). Write-up: [APPROACH.md](APPROACH.md). Live evaluation: [LIVE_EVALUATION_REPORT.md](LIVE_EVALUATION_REPORT.md) (**not run yet**: no API key so far).
+Design: [ARCHITECTURE.md](ARCHITECTURE.md). Decisions and trade-offs: [TECHNICAL_DECISIONS.md](TECHNICAL_DECISIONS.md). Requirement status: [REQUIREMENTS_CHECKLIST.md](REQUIREMENTS_CHECKLIST.md). Write-up: [APPROACH.md](APPROACH.md). Live evaluation: [LIVE_EVALUATION_REPORT.md](LIVE_EVALUATION_REPORT.md) (**not run yet**: no API key so far). Code map: [CODE_WALKTHROUGH.md](CODE_WALKTHROUGH.md). Interview notes: [INTERVIEW_PREPARATION.md](INTERVIEW_PREPARATION.md).
 
 ## Setup (one command)
 
