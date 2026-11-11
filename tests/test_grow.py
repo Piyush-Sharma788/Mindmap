@@ -247,6 +247,8 @@ def test_poisoned_existing_map_is_neutralised_in_prompt() -> None:
     assert provider.requests[0].messages[0]["content"].count("</existing_map>") == 1
 
 
-def test_report_is_json_serialisable() -> None:
-    result = run(make_map(5), FakeProvider([grow_reply(candidate("c1", "Irrigation"))]))
-    json.loads(result.model_dump_json(by_alias=True))
+def test_report_is_json_serialisable_and_discloses_excerpt_ratio() -> None:
+    result = run(make_map(5), FakeProvider([grow_reply(candidate("c1", "Irrigation"))]),
+                 doc=synthetic_doc(100_000))
+    report = json.loads(result.model_dump_json(by_alias=True))
+    assert 0 < report["excerpt"]["sent_ratio"] < 0.3

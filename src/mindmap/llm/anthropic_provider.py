@@ -92,6 +92,12 @@ class AnthropicProvider:
             raise ProviderRequestRejected(f"request rejected {exc.status_code}: {exc}") from exc
         except anthropic.AnthropicError as exc:
             raise ProviderError(f"provider failure: {type(exc).__name__}: {exc}") from exc
+        except TypeError as exc:
+            # The SDK raises a bare TypeError, before any network I/O, when it finds no usable
+            # credential (e.g. an empty ~/.config/anthropic). Only that case is translated.
+            if "authentication method" in str(exc):
+                raise ConfigError("No usable Anthropic credentials. Set ANTHROPIC_API_KEY.") from exc
+            raise
 
         text = "".join(block.text for block in response.content if getattr(block, "type", None) == "text")
         u = response.usage

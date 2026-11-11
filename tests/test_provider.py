@@ -104,6 +104,14 @@ def test_sdk_errors_mapped_to_typed_errors(exc, expected) -> None:
         assert info.value.retry_after_s == 3.0
 
 
+def test_sdk_credential_typeerror_becomes_config_error() -> None:
+    exc = TypeError("Could not resolve authentication method. Expected one of api_key ...")
+    with pytest.raises(ConfigError):
+        AnthropicProvider(client=_client(exc)).complete(_request())
+    with pytest.raises(TypeError):  # any other TypeError is a bug and must propagate
+        AnthropicProvider(client=_client(TypeError("unexpected"))).complete(_request())
+
+
 def test_sdk_is_imported_in_exactly_one_module() -> None:
     importers = [p.relative_to(SRC).as_posix() for p in SRC.rglob("*.py")
                  if "import anthropic" in p.read_text() or "from anthropic" in p.read_text()]

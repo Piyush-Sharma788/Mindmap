@@ -14,7 +14,7 @@ from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
 from mindmap.config import EXCERPT_MAX_CHARS, MAX_INPUT_BYTES, NOVELTY_WEIGHT, SEGMENT_MAX_CHARS
 from mindmap.errors import InputError
@@ -81,6 +81,7 @@ class ExcerptStats(BaseModel):
     segments_sent: int
     passthrough: bool
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def sent_ratio(self) -> float:
         return self.sent_chars / self.doc_chars if self.doc_chars else 1.0
