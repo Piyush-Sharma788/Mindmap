@@ -43,7 +43,11 @@ def test_record_then_replay_gives_identical_metrics(tmp_path) -> None:
     recorder = RecordingProvider(FakeProvider([_dynamic], repeat_last=True), suite / "cassettes")
     recorded = run_suite(suite, recorder, Settings(), "record")
     replayed = run_suite(suite, ReplayProvider(suite / "cassettes"), Settings(), "replay")
-    assert recorded["aggregate"] == replayed["aggregate"]
+    # Latency is wall-clock time of the recording run; replay cannot reproduce it (cassettes do not
+    # store latency). Comparing it made this test fail whenever the record run took >= 0.5 ms.
+    timing = {"mean_latency_ms_per_case", "max_latency_ms_per_case"}
+    strip = lambda agg: {k: v for k, v in agg.items() if k not in timing}  # noqa: E731
+    assert strip(recorded["aggregate"]) == strip(replayed["aggregate"])
     agg = replayed["aggregate"]
     assert agg["cases_scored"] == 2
     assert agg["generate_concept_recall"] == 0.5
