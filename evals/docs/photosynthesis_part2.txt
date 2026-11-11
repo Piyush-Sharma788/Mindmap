@@ -1,0 +1,7 @@
+The enzyme that fixes carbon dioxide in the Calvin cycle is called RuBisCO. It is probably the most abundant protein on Earth, but it is slow and makes mistakes. When oxygen levels are high relative to carbon dioxide, RuBisCO grabs oxygen instead. This wasteful process is called photorespiration, and it can cut the efficiency of photosynthesis by a quarter in hot, dry weather.
+
+Some plants have evolved ways around photorespiration. C4 plants, such as maize and sugarcane, first capture carbon dioxide in mesophyll cells using an enzyme that ignores oxygen. They then pump the carbon into bundle sheath cells, where RuBisCO works in a carbon-rich environment.
+
+CAM plants, such as cacti and pineapples, separate the steps in time rather than space. They open their stomata only at night, store carbon dioxide as malic acid, and release it to the Calvin cycle during the day while the stomata stay closed. This saves a great deal of water in deserts.
+
+Chlorophyll is still the main light-absorbing pigment in both groups, and the light-dependent reactions are unchanged. Researchers are now trying to engineer C4 traits into rice to raise crop yields.

@@ -1,0 +1,11 @@
+Wind and solar output rises and falls with the weather, so a grid that relies on them needs ways to store energy and release it later.
+
+Lithium-ion batteries are now the fastest-growing form of grid storage. They respond in milliseconds, which makes them good at frequency regulation, but they usually store only two to four hours of energy and their cells degrade with each charge cycle.
+
+Pumped hydro storage is still the largest form of storage worldwide. Water is pumped uphill to a reservoir when power is cheap and released through turbines when power is needed. It can store energy for many hours, but it needs suitable geography and takes years to build.
+
+Green hydrogen is made by electrolysis using surplus renewable electricity. It can be stored for months and used in industry or burned in turbines, but converting power to hydrogen and back loses more than half of the energy.
+
+Other options include flow batteries, which separate energy and power so capacity can grow cheaply; compressed air stored in caverns; and thermal storage in molten salt, often paired with concentrated solar plants.
+
+Demand response is a cheaper complement to storage: utilities pay large users to shift consumption to hours when renewable output is high. Grid operators also worry about inertia, the stabilising effect of heavy spinning generators, which falls as fossil plants close; synthetic inertia from batteries is one proposed fix.

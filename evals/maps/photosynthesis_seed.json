@@ -1,0 +1,73 @@
+{
+  "title": "Photosynthesis",
+  "rootId": "photosynthesis",
+  "nodes": [
+    {
+      "id": "photosynthesis",
+      "label": "Photosynthesis",
+      "summary": "Plants convert light energy into chemical energy stored in sugars."
+    },
+    {
+      "id": "chlorophyll",
+      "label": "Chlorophyll",
+      "summary": "A green pigment in chloroplasts that absorbs red and blue light."
+    },
+    {
+      "id": "light-reactions",
+      "label": "Light Reactions",
+      "summary": "Light-dependent reactions split water and produce ATP and NADPH."
+    },
+    {
+      "id": "calvin-cycle",
+      "label": "Calvin Cycle",
+      "summary": "Uses ATP and NADPH to fix carbon dioxide into sugar in the stroma."
+    },
+    {
+      "id": "oxygen-release",
+      "label": "Oxygen Release",
+      "summary": "Splitting water releases oxygen as a by-product."
+    },
+    {
+      "id": "stomata",
+      "label": "Stomata",
+      "summary": "Leaf pores that admit carbon dioxide and release oxygen and water vapour."
+    },
+    {
+      "id": "glucose",
+      "label": "Glucose",
+      "summary": "The sugar plants build from the Calvin cycle's three-carbon product."
+    }
+  ],
+  "connections": [
+    {
+      "from": "photosynthesis",
+      "to": "chlorophyll",
+      "label": "includes"
+    },
+    {
+      "from": "photosynthesis",
+      "to": "light-reactions",
+      "label": "includes"
+    },
+    {
+      "from": "photosynthesis",
+      "to": "calvin-cycle",
+      "label": "includes"
+    },
+    {
+      "from": "light-reactions",
+      "to": "oxygen-release",
+      "label": "includes"
+    },
+    {
+      "from": "photosynthesis",
+      "to": "stomata",
+      "label": "includes"
+    },
+    {
+      "from": "calvin-cycle",
+      "to": "glucose",
+      "label": "includes"
+    }
+  ]
+}

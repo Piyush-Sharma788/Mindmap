@@ -1,0 +1,9 @@
+Photosynthesis is the process by which plants, algae and some bacteria convert light energy into chemical energy. It takes place mainly in the leaves, inside organelles called chloroplasts.
+
+Chloroplasts contain chlorophyll, a green pigment that absorbs red and blue light and reflects green light. This absorbed energy powers the first stage of photosynthesis, the light-dependent reactions. In these reactions, which happen in the thylakoid membranes, water molecules are split. Splitting water releases oxygen as a by-product and produces the energy carriers ATP and NADPH.
+
+The second stage is the Calvin cycle, which takes place in the stroma of the chloroplast. The Calvin cycle does not need light directly. It uses ATP and NADPH from the light-dependent reactions to fix carbon dioxide from the air into organic molecules. The end product is a three-carbon sugar that the plant uses to build glucose and other carbohydrates.
+
+Plants take in carbon dioxide through small pores on the leaf surface called stomata. The same pores release oxygen and water vapour, so opening them is a trade-off between gaining carbon and losing water.
+
+Photosynthesis matters far beyond the plant. It supplies almost all of the oxygen in the atmosphere and forms the base of most food chains, because the sugars plants make become food for animals.
