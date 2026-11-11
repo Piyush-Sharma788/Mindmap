@@ -96,7 +96,7 @@ A short map of the code for reading it end to end, or for changing it live. Line
 
 ## Running things
 ```bash
-make setup && make test                         # offline; 185 tests
+make setup && make test                         # offline; 187 tests
 .venv/bin/mindmap eval --mode pipeline          # deterministic bench, ~1 s
 .venv/bin/mindmap -v grow --map evals/maps/photosynthesis_seed.json \
     --in evals/docs/photosynthesis_part2.txt --out /tmp/m2.json   # needs a key; prints one log line per request

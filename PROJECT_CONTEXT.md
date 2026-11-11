@@ -9,7 +9,7 @@
 ## 0. Repository state at Phase 0
 
 - `/Users/piyushsharma/Desktop/Challange` was **empty**: no files, no dependencies, no config.
-- It is **not a git repository** yet. The PDF requires commits at each logical milestone, so `git init` must happen before or at the first code phase.
+- *(Phase 0 snapshot. Git was initialised in Phase 2.)* It is **not a git repository** yet. The PDF requires commits at each logical milestone, so `git init` must happen before or at the first code phase.
 - Nothing existing had to be preserved or reused.
 
 ---

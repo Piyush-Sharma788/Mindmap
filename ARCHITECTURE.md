@@ -11,7 +11,7 @@
 
 ```
             ┌──────────────────────── CLI (Typer, thin) ─────────────────────────┐
-            │ generate │ grow │ render │ eval      → exit codes, files, --trace     │
+            │ generate │ grow │ render │ eval      → exit codes, files, report      │
             └────┬───────────┬─────────┬──────────┬──────────────────────────────┘
                  │           │         │          │
         ┌────────▼──┐  ┌─────▼─────┐ ┌─▼──────┐ ┌─▼─────────────┐
@@ -60,7 +60,7 @@
 | `pricing.py` | Dated price table and `cost(usage, model)` | No |
 | `observability.py` | `UsageRecord` per request, the trace collector, and logging setup (no document text in logs by default) | No |
 | `evals/` (package) | Suite loader, runner (modes: replay, live, record), metrics and lexical concept matcher, results JSON and a compare command | Only in live and record modes |
-| `cli.py` | Typer commands. Argument parsing, file I/O, exit codes, `--trace` | No |
+| `cli.py` | Typer commands. Argument parsing, file I/O, exit codes, `.env` loading, `<out>.report.json` | No |
 
 Business logic (`generate`, `grow`, `dedup`, `ranking`, `assemble`) depends only on `LLMProvider` and `contract`. It never imports `anthropic` or `typer`.
 
@@ -107,7 +107,7 @@ doc bytes
  → [6] assemble: ref→id (slugs), resolve root, drop dangling/self/dup edges, attach orphans to root,
        enforce 5–9 (trim lowest importance if > 9; if < 5 and budget left → repair call; else error)     code
  → [7] Mindmap.model_validate (final contract gate)                                                     code
- → GenerateResult { mindmap, repairs[], trimmed[], excerpt_stats, usage[], cost_usd }
+ → GenerateResult { mindmap, repairs[], trimmed[], excerpt, usage[], usage_summary }
 ```
 
 - **Budget:** `GENERATE_MAX_CALLS = 2` (reasoned: the PDF sets no limit, but grow's discipline is applied for consistency and cost predictability).
@@ -147,12 +147,12 @@ existing Mindmap (validated on load) + doc2 bytes
         new edges attach_to → new node with relation; existing nodes/edges/title/root untouched  code
  → [11] Mindmap.model_validate(max_nodes=25) + preservation check (old ⊆ new, byte-equal)          code
  → GrowResult { mindmap, added[], duplicates[], omitted[], repairs[],
-                excerpt_stats{doc_chars, sent_chars, sent_ratio}, usage[], cost_usd }
+                excerpt{doc_chars, sent_chars, sent_ratio}, usage[], usage_summary }
 ```
 
 **Accounting invariant (tested):** `len(candidates) == len(added) + len(duplicates) + len(omitted)`. Every proposed concept is accounted for, so nothing is discarded silently.
 
-**Material that never reached the model** (the excerpt dropped it) is a second kind of omission. It is reported as `excerpt_stats.sent_ratio` and listed as a known limitation. It cannot be itemised as concepts without another model call.
+**Material that never reached the model** (the excerpt dropped it) is a second kind of omission. It is reported as `excerpt.sent_ratio` and listed as a known limitation. It cannot be itemised as concepts without another model call.
 
 ### 5.1 Why one main call plus one repair call (not two working calls)
 - One call sees both the map and the excerpt, so it can decide "new or already covered" with full context. Splitting extraction and dedup into two calls would send the candidates twice and roughly double the tokens. It would also leave **no** request for recovery, so any malformed response would be a hard failure.
@@ -168,10 +168,12 @@ existing Mindmap (validated on load) + doc2 bytes
 ## 6. Provider abstraction
 
 ```python
-class LLMProvider(Protocol):
-    def complete(self, req: LLMRequest, budget: CallBudget) -> LLMResult: ...
-# LLMRequest: purpose ("generate"|"grow"|"repair"), model, system, messages, response_model, max_tokens, effort
-# LLMResult: parsed (wire model instance) | None, raw_text, stop_reason, usage: UsageRecord
+class LLMProvider(Protocol):          # llm/base.py (as implemented)
+    name: str
+    def complete(self, request: LLMRequest) -> LLMResponse: ...   # exactly ONE request, no internal retry
+# LLMRequest: purpose, attempt, model, system, messages, schema, max_tokens, effort, cache_system_prompt
+# LLMResponse: text, stop_reason, model, usage (provider-reported), provider, request_id
+# Budget is NOT a provider concern: BudgetedCaller (llm/budget.py) acquires a slot, then calls complete().
 ```
 
 - **AnthropicProvider:** `anthropic.Anthropic(max_retries=0, timeout=REQUEST_TIMEOUT_S)`, structured outputs via `output_config.format` (or `messages.parse` with the wire model), and a typed exception chain (most specific first) mapped to `ProviderError` subtypes. It reads content blocks **by type**, because current models may return thinking blocks before the text. It checks `stop_reason` first: `refusal` → `ProviderError(Refused)` and `max_tokens` → `ModelOutputError(Truncated)`.
@@ -207,7 +209,7 @@ Five layers. Any one of them is enough on its own; together they are hard to byp
 ## 8. Data flow and result objects
 
 - Input files are read only by the CLI or library loaders. Services take `str` and `Mindmap` objects, which keeps them pure and testable.
-- The CLI writes **only the contract `Mindmap`** to `--out`. The report (added, duplicates, omitted, repairs, excerpt stats, usage, cost) goes to `<out>.report.json` and a short summary goes to stderr. `--trace` writes the per-request `UsageRecord`s. The contract file is never polluted with extra fields.
+- The CLI writes **only the contract `Mindmap`** to `--out`. The report (added, duplicates, omitted, repairs, excerpt stats, usage, cost) goes to `<out>.report.json`, which includes the per-request `UsageRecord`s, and a short summary goes to stderr. The contract file is never polluted with extra fields.
 - Writes are atomic (temporary file, then rename), and nothing is written on failure.
 
 ---
@@ -219,7 +221,7 @@ Five layers. Any one of them is enough on its own; together they are hard to byp
 | Missing or invalid credentials | `ConfigError` before any request | 2 |
 | Input too big, not UTF-8, empty, or invalid map JSON | `InputError` before any request | 3 |
 | Provider timeout, 429, 5xx or connection error | one retry within the budget, then `ProviderError` | 4 |
-| Refusal (`stop_reason: refusal`) | consumes a slot. Retry is allowed within the budget, but it is likely to refuse again. Then `ProviderError(Refused)` | 4 |
+| Refusal (`stop_reason: refusal`) | consumes a slot. The same request is resent once within the budget (it will probably refuse again). Then `ModelOutputError` | 5 |
 | Malformed or truncated output | repair request if budget remains, else `ModelOutputError` | 5 |
 | Fixable graph defects (dangling edges, self-loops, orphans, > 9 nodes, invalid `duplicate_of`) | deterministic repair, **logged in `repairs[]`** | 0 |
 | Fewer than 5 nodes after repair | `ModelOutputError`, never padded | 5 |
@@ -240,7 +242,7 @@ There is no catch-all `except Exception` anywhere in the services. The CLI has o
 | Oversized or binary input | `MAX_INPUT_BYTES`, strict UTF-8 decoding, NUL and control characters stripped, empty input rejected | Unit tests |
 | Mermaid injection (`"`, `]`, `%%`, `click`, HTML in labels) | The renderer uses its own aliases, escapes quotes and brackets, strips newlines, and truncates | Snapshot test with hostile labels |
 | Cost-amplification attacks (huge documents) | Bounded excerpt, bounded output, ≤ 2 requests | Budget tests (§7) |
-| Data leakage in logs | No document text at INFO. Lengths and hashes only. Full prompts appear only with an explicit `--debug-prompts` flag | Code review |
+| Data leakage in logs | No document text is logged at any level. Logs hold sizes, counts and outcomes only (`--debug-prompts` was designed but not built) | Code review |
 | Credential leakage | Keys come from the environment or the SDK's profile resolution only. `.env` is in `.gitignore` before the first commit. The key is never logged. A secret scan runs over `git log -p` before every push | Pre-push check |
 
 ---
@@ -256,22 +258,22 @@ There is no catch-all `except Exception` anywhere in the services. The CLI has o
 ## 12. Evaluation architecture
 
 ```
-evals/
-  suite/
-    cases.yaml          # case id, type (generate|grow), doc path(s), expectations
-    docs/*.txt          # hand-written / public-domain fixtures
-    maps/*.json         # seed maps for grow cases
-    cassettes/<model>/<request-hash>.json   # recorded raw responses (no credentials)
-  results/<date>-<model>-<prompt_version>.json
+evals/                    # as implemented
+  cases.json              # case id, kind (generate|grow), doc, seed map, expectations
+  docs/*.txt              # AI-written fixtures (incl. a generated 63K report)
+  maps/*.json             # seed maps for grow cases
+  cassettes/<request-hash>.json   # recorded responses (created by --mode record; none yet)
+  results/*.json          # eval and pipeline-bench outputs
 ```
 
 - **Modes:**
+  - `pipeline` (no key): the deterministic bench on scripted model output (Phase 4). It is not a model-quality measurement.
   - `replay` (default, no key) serves cassettes and recomputes every metric offline.
   - `live` calls the real provider and costs money.
   - `record` is live plus writing cassettes.
 - **What replay lets you test:** code-side changes (dedup, ranking, assembly, selection *only if the prompt stays identical*) are measured offline for free. A prompt or model change changes the request hash, so replay reports cassette misses and that case needs a live re-record. This is how we tell whether a change helped, and it is honest about what can and cannot be evaluated offline.
 - **Two tiers of checks:**
   - **Deterministic invariants** (pytest plus eval, fake provider): validity, call count, prompt bound, preservation, ceiling, accounting invariant, escaping.
-  - **Quality metrics** (eval, live, or replayed from live recordings): concept recall, new-concept recall, duplicate leakage, consistency across k runs, pre-repair validity, repair rate, injection, cost, latency.
-- **Metric definitions and the dataset** are in TD-14. `eval compare a.json b.json` prints the difference for each metric.
+  - **Quality metrics** (eval, live, or replayed from live recordings): concept recall, new-concept recall, duplicate leakage, pre-repair validity, repair rate, injection, cost, latency.
+- **Metric definitions** are in TD-14. Comparing two runs means diffing their results JSON; an `eval compare` command was designed but not built. Consistency across k runs was cut.
 - No LLM-as-judge in this version (reasons in TD-14). Concept matching is **lexical by design and named that way** (`match_concepts_lexically`).

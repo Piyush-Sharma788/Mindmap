@@ -2,7 +2,7 @@
 
 A library and thin CLI that turns a document into a small concept mindmap (`generate`) and grows an existing map with a second document (`grow`). Grow uses **at most 2 LLM requests**, whatever the document length, and the map holds **at most 25 nodes**.
 
-Design: [ARCHITECTURE.md](ARCHITECTURE.md). Decisions and trade-offs: [TECHNICAL_DECISIONS.md](TECHNICAL_DECISIONS.md). Requirement status: [REQUIREMENTS_CHECKLIST.md](REQUIREMENTS_CHECKLIST.md). Write-up: [APPROACH.md](APPROACH.md). Live evaluation: [LIVE_EVALUATION_REPORT.md](LIVE_EVALUATION_REPORT.md) (**not run yet**: no API key so far). Code map: [CODE_WALKTHROUGH.md](CODE_WALKTHROUGH.md). Interview notes: [INTERVIEW_PREPARATION.md](INTERVIEW_PREPARATION.md).
+Design: [ARCHITECTURE.md](ARCHITECTURE.md). Decisions and trade-offs: [TECHNICAL_DECISIONS.md](TECHNICAL_DECISIONS.md). Requirement status: [REQUIREMENTS_CHECKLIST.md](REQUIREMENTS_CHECKLIST.md). Write-up: [APPROACH.md](APPROACH.md). Live evaluation: [LIVE_EVALUATION_REPORT.md](LIVE_EVALUATION_REPORT.md) (**not run yet**: no API key so far). Code map: [CODE_WALKTHROUGH.md](CODE_WALKTHROUGH.md). Interview notes: [INTERVIEW_PREPARATION.md](INTERVIEW_PREPARATION.md). Audit: [FINAL_REQUIREMENTS_AUDIT.md](FINAL_REQUIREMENTS_AUDIT.md). Submission: [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md).
 
 ## Setup (one command)
 
@@ -118,7 +118,7 @@ src/mindmap/
   ranking.py       grow: importance ranking + admission under the ceiling
   generate.py / grow.py   pipelines
   render.py        Mermaid output with escaping
-  llm/             provider protocol, CallBudget, Anthropic provider, fake, cassettes
+  llm/             provider protocol, CallBudget, Anthropic + Gemini providers, fake, cassettes
   evals/           runner + metrics; pipeline.py (offline bench) + synthetic.py (generated docs)
   cli.py           Typer CLI
 schema/mindmap.schema.json   generated from contract.py (a drift test fails if stale)

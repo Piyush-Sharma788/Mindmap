@@ -161,7 +161,7 @@ Exercises 1–3 were trial-run on a scratch clone; their test outcomes below are
 - Where: `prepare_candidates`, [dedup.py:53–62](src/mindmap/dedup.py#L53).
 - Change: count only candidates whose `duplicate_of is None` toward `MAX_CANDIDATES`.
 - Also update the grow prompt line "Return at most {max_candidates} candidates in total" in `grow_user_message` ([prompts.py:88](src/mindmap/prompts.py#L88)), because output size is now bounded by `max_tokens` rather than by the candidate count.
-- Observed: **all 185 tests still pass**, which means no test covers this. Add one: 15 model-marked duplicates plus 3 new candidates → all 3 new ones considered, and accounting still equals 18.
+- Observed (Phase 6, 185 tests at the time): **every test still passes**, which means no test covers this. Add one: 15 model-marked duplicates plus 3 new candidates → all 3 new ones considered, and accounting still equals 18.
 
 **Ex 2: Fail fast on refusal** (stop wasting the second request)
 - Where: [structured.py:95–98](src/mindmap/llm/structured.py#L95). Replace `continue` with `raise ModelOutputError(f"{purpose}: model refused", failures)`.

@@ -11,7 +11,7 @@
 | Not under test | Anthropic Claude. **No Claude figure in this repository is measured;** all Claude costs are estimates (APPROACH §7) |
 
 ## 2. Preflight checklist (before any request)
-- [ ] `.env` contains `GEMINI_API_KEY` and `MINDMAP_PROVIDER=gemini`. Status at writing: **`.env` absent**.
+- [x] `.env` contains a `GEMINI_API_KEY` line and `MINDMAP_PROVIDER=gemini`. Checked in Phase 7 by counting lines only; values not read. The key has **not** been used: no request has been made.
 - [x] `.env` is gitignored (`git check-ignore .env`); no credential-like file is tracked; history secret scan clean.
 - [x] SDK retries off (`HttpRetryOptions(attempts=1)`, test `test_sdk_retries_disabled_and_timeout_in_ms`); no server-side fallback; no embeddings or token-count calls.
 - [ ] **The user confirms that the AI Studio project is on the Free tier with no billing account.** The pricing page does not say how a project is assigned to a tier, so this cannot be checked from the code.

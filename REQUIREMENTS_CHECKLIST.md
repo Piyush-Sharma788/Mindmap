@@ -82,7 +82,7 @@ Phase 2 notes:
 | EV-1 | Define what is measured (metrics chosen and justified in APPROACH.md) | ⛔ | IMPLEMENTED (APPROACH §10) | APPROACH.md section exists |
 | EV-2 | An eval suite directory with a set of document cases (generate and grow pairs) | ⛔ | IMPLEMENTED (10 live cases + offline pipeline bench) | `evals/` exists, with the case count stated |
 | EV-3 | `eval` outputs **real numbers** (e.g. validity rate, call count, duplicate rate, preservation, coverage, cost) | ⛔ | BLOCKED | Run the command; the output is saved in the repo and quoted in APPROACH.md |
-| EV-4 | Two runs can be compared, so that a change can be shown to be better or worse | ● | IN PROGRESS | Results stored as JSON with a diff or compare step |
+| EV-4 | Two runs can be compared, so that a change can be shown to be better or worse | ● | IMPLEMENTED (results JSON diff; before/after bench files; `eval compare` not built) | Results stored as JSON with a diff or compare step |
 | EV-5 | Every number in APPROACH.md is reproducible by the code | ⛔ | IN PROGRESS (pipeline numbers trace to evals/results; live numbers pending) | Cross-check each number against an eval output file before submission |
 | EV-6 | Adversarial or injection cases are included in the suite | ● | IMPLEMENTED | Suite contents |
 
@@ -159,7 +159,7 @@ Phase 2 notes:
 | AR-11 | Validation and repair policy table, with every repair logged (TD-10) | DC-5–9, GEN-2, ERR-1 | VERIFIED | Each table row has a fake-provider test |
 | AR-12 | Typed errors, CLI exit codes, atomic writes, no catch-all in services | ERR-1, CLI-5 | VERIFIED | Failing-provider test: non-zero exit, no output file |
 | AR-13 | Untrusted-input protections (ARCHITECTURE §10) | SEC-1–6 | VERIFIED | Injection eval cases, hostile Mermaid snapshot, size and encoding tests |
-| AR-14 | Observability: a UsageRecord per request, `--trace`, no document text in logs | AG-3, COST-1 | VERIFIED | Test: one record per request, with the expected fields |
+| AR-14 | Observability: a UsageRecord per request (in `<out>.report.json`; `--trace` not built), no document text in logs | AG-3, COST-1 | VERIFIED | Test: one record per request, with the expected fields |
 | AR-15 | Eval: deterministic tier plus quality tier; replay/live/record modes; cassettes; `compare` (TD-14) | EV-1–6 | IMPLEMENTED | `eval --mode replay` runs from a clean clone with no key and reproduces the committed results JSON |
 | AR-16 | No agent loop. A fixed DAG with a bounded repair step (TD-13) | AG-1, AG-2 | IMPLEMENTED (argued in APPROACH §1) | APPROACH.md argument plus the call-budget tests |
 | AR-17 | Provider: Anthropic. Model per step from config. **Model choice pending the user and eval data** (TD-2) | MS-1, MS-2 | IN PROGRESS | Eval comparison table: model × effort → quality and cost |

@@ -84,7 +84,7 @@ Either fits behind `LLMProvider`. Anthropic was chosen for a 40× cost range wit
 ## TD-4 Long-document bounding — DECIDED (design), numbers guessed
 - **Chosen:** `select_passages(doc, budget_chars, novelty_against=None)` is **deterministic extractive selection, with no model**.
   1. Segment into sentences (regex) inside paragraphs.
-  2. Score each sentence: salience = mean TF-IDF weight of its content words (IDF computed over the document's own sentences) × `(1 − NOVELTY_WEIGHT × overlap)`, where overlap is the share of its content words found in the existing map's labels and summaries (grow only).
+  2. *(Superseded in Phase 4, P4-1: numbers and URLs are excluded from scoring terms, and the score is also multiplied by `prose_ratio`.)* Score each sentence: salience = mean TF-IDF weight of its content words (IDF computed over the document's own sentences) × `(1 − NOVELTY_WEIGHT × overlap)`, where overlap is the share of its content words found in the existing map's labels and summaries (grow only).
   3. Pick greedily by score until the budget is reached.
   4. Re-emit in **original order** with `[…]` markers for the gaps.
 - A document that already fits the budget passes through verbatim (the most common case for short documents).
@@ -123,7 +123,8 @@ Either fits behind `LLMProvider`. Anthropic was chosen for a 40× cost range wit
 ## TD-6 Prioritisation & ceiling — DECIDED (design)
 - **Value signal:** the model assigns `importance` on a 1–5 scale. A coarse ordinal scale is likely more stable across runs than 0–100 (*guessed*).
 - **Deterministic ranking in code:** importance descending → attached to an existing node before attached to another candidate → emission order.
-- **Admission:** walk the ranked list. Admit while capacity > 0 and the attach target is existing or already admitted. Otherwise, omit with reason `ceiling` / `parent_omitted` / `invalid_attach`.
+- *(Superseded in Phase 4, P4-3: admission is now greedy by parent chain, and the `parent_omitted` reason no longer exists. See ARCHITECTURE §5.)*
+- **Admission (Phase 1 design):** walk the ranked list. Admit while capacity > 0 and the attach target is existing or already admitted. Otherwise, omit with reason `ceiling` / `parent_omitted` / `invalid_attach`.
 - `MAX_CANDIDATES = 15` (*guessed*): enough for a full refill from the minimum map size (5 → 25 needs 20, so a nearly empty map may not fill completely, which is acceptable), and it bounds output tokens.
 - **Map already at or above 25 nodes:** still make one call so that omissions can be reported, as the spec requires. Add nothing and never delete existing nodes ("survive" takes precedence). A map loaded with more than 25 nodes is accepted but flagged.
 - **Alternatives:** code-only value (centrality, salience), which is blind to meaning; LLM-chosen final set, which can't be verified.
@@ -131,7 +132,7 @@ Either fits behind `LLMProvider`. Anthropic was chosen for a 40× cost range wit
 - **Tests:** given importances → the exact admitted set; the ceiling is never exceeded; every omission has a reason.
 
 ## TD-7 Overflow report — DECIDED (design)
-- A `GrowResult` with `mindmap`, `added`, `duplicates`, `omitted`, `repairs`, `excerpt_stats`, `usage` and `cost_usd`.
+- A `GrowResult` with `mindmap`, `capacity_before`, `candidates_total`, `added`, `duplicates`, `omitted`, `repairs`, `excerpt`, `usage` and `usage_summary` (as implemented).
 - The CLI writes the pure contract map to `--out`, the report to `<out>.report.json`, and a summary to stderr. The contract stays unpolluted.
 
 ## TD-8 Node ids — DECIDED (design)
@@ -174,7 +175,7 @@ Every node must connect to the root (edge direction ignored for reachability). N
   - a free-form tool-using agent: overkill, with an unbounded cost per paid interaction.
 - **Guardrails instead of autonomy:** `CallBudget`, `max_tokens`, timeouts, schema-constrained outputs, contract gates, and a repair log.
 
-## TD-14 Evaluation methodology — DECIDED (design), dataset to be written
+## TD-14 Evaluation methodology — DECIDED; 10-case starter suite written; consistency runs and `eval compare` cut
 **Deterministic checks (offline, run in pytest and in `eval --mode replay`):**
 | Metric | Definition | Target |
 |---|---|---|
@@ -225,7 +226,7 @@ Every node must connect to the root (edge direction ignored for reachability). N
 - Hand-written expectations carry the author's bias.
 - If AI helps write the fixtures, that must be disclosed.
 
-**"Did a change help?"** `eval compare` shows the difference per metric. Code-only changes are evaluated free through replay. Prompt or model changes require a live re-record (cassette miss is reported explicitly).
+**"Did a change help?"** Diff two results JSON files (an `eval compare` command was designed but not built). Code-only changes are evaluated free through replay. Prompt or model changes require a live re-record (cassette miss is reported explicitly).
 
 ## TD-15 Offline testing — DECIDED (design)
 `FakeProvider` (scripted, counting, records requests) and `ReplayProvider` (cassettes). Tests never construct a network client except the `max_retries=0` construction test, which uses a dummy key and sends no request. A conftest guard fails any test that tries a real HTTP connection. Cassettes contain responses only, never headers or keys.

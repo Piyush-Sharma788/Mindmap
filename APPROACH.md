@@ -1,6 +1,6 @@
 # APPROACH
 
-> **Status (2026-11-11):** the engine works end to end against scripted model output, and that is covered by 185 offline tests. **No live model call has been made yet** because no API key was available while this was written. Every model-quality statement below is therefore marked *pending* or *estimate*. Pipeline numbers come from committed files you can re-run.
+> **Status (2026-11-11):** the engine works end to end against scripted model output, and that is covered by 187 offline tests. **No live model call has been made yet** because no API key was available while this was written. Every model-quality statement below is therefore marked *pending* or *estimate*. Pipeline numbers come from committed files you can re-run.
 
 ## 1. Design
 
@@ -208,7 +208,7 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
 - **[Author: state here how much of the code you have personally reviewed and changed.]**
 
 ## 15. Time note and commit history
-- **Agent session:** about 07:52 to 09:15 on 2026-11-11, roughly 1 h 25 min of wall-clock time, including pauses for approval between phases.
-- **Commits:** every commit was made between 08:16 and about 09:20 on 2026-11-11 (see `git log`). They are **agent-paced bursts minutes apart**, disclosed here as the assignment asks. Each commit is one milestone that was tested before committing.
+- **Agent session:** from about 07:52 on 2026-11-11, roughly 1.5–2 h of wall-clock time in total, including pauses for approval between phases. `git log` has the exact commit times.
+- **Commits:** every commit was made on 2026-11-11, starting at 08:16 (see `git log`). They are **agent-paced bursts minutes apart**, disclosed here as the assignment asks. Each commit is one milestone that was tested before committing.
 - **Rough because of time:** no live results; a small, AI-written eval set; heuristics noted in §12.
 - **[Author: add your own review and hands-on time.]**
