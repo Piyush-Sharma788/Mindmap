@@ -1,0 +1,20 @@
+{
+  "key": "22450a4b2b700e0fe308fcb03c65ac34",
+  "purpose": "generate",
+  "attempt": 1,
+  "requested_model": "gemini-3.6-flash",
+  "recorded_at": "2026-11-11T04:06:22+00:00",
+  "response": {
+    "text": "{\n  \"title\": \"Photosynthesis Overview\",\n  \"root_ref\": \"n1\",\n  \"nodes\": [\n    {\n      \"ref\": \"n1\",\n      \"label\": \"Photosynthesis\",\n      \"summary\": \"Photosynthesis is the process by which plants, algae, and some bacteria convert light energy into chemical energy.\",\n      \"importance\": 5\n    },\n    {\n      \"ref\": \"n2\",\n      \"label\": \"Chloroplasts\",\n      \"summary\": \"Chloroplasts are specialized leaf organelles containing chlorophyll that absorb light to power photosynthesis.\",\n      \"importance\": 4\n    },\n    {\n      \"ref\": \"n3\",\n      \"label\": \"Light-Dependent Reactions\",\n      \"summary\": \"Occurring in thylakoid membranes, these reactions split water to release oxygen and produce ATP and NADPH.\",\n      \"importance\": 4\n    },\n    {\n      \"ref\": \"n4\",\n      \"label\": \"Calvin Cycle\",\n      \"summary\": \"Taking place in the stroma, the Calvin cycle uses ATP and NADPH to fix carbon dioxide into three-carbon sugars.\",\n      \"importance\": 4\n    },\n    {\n      \"ref\": \"n5\",\n      \"label\": \"Stomata\",\n      \"summary\": \"Stomata are small leaf pores that absorb carbon dioxide while balancing oxygen and water vapor loss.\",\n      \"importance\": 3\n    },\n    {\n      \"ref\": \"n6\",\n      \"label\": \"Global Ecological Impact\",\n      \"summary\": \"Photosynthesis supplies atmospheric oxygen and forms the base of most global food chains.\",\n      \"importance\": 4\n    }\n  ],\n  \"connections\": [\n    {\n      \"source_ref\": \"n1\",\n      \"target_ref\": \"n2\",\n      \"label\": \"takes place in\"\n    },\n    {\n      \"source_ref\": \"n2\",\n      \"target_ref\": \"n3\",\n      \"label\": \"hosts\"\n    },\n    {\n      \"source_ref\": \"n2\",\n      \"target_ref\": \"n4\",\n      \"label\": \"hosts\"\n    },\n    {\n      \"source_ref\": \"n1\",\n      \"target_ref\": \"n5\",\n      \"label\": \"exchanges gas via\"\n    },\n    {\n      \"source_ref\": \"n1\",\n      \"target_ref\": \"n6\",\n      \"label\": \"drives\"\n    }\n  ]\n}",
+    "stop_reason": "end_turn",
+    "model": "gemini-3.6-flash",
+    "provider": "gemini",
+    "request_id": "tOnzaqLKKbL0694P586ysA8",
+    "usage": {
+      "input_tokens": 563,
+      "output_tokens": 1659,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0
+    }
+  }
+}

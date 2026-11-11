@@ -1,0 +1,63 @@
+{
+  "title": "Photosynthesis Overview",
+  "rootId": "photosynthesis",
+  "nodes": [
+    {
+      "id": "photosynthesis",
+      "label": "Photosynthesis",
+      "summary": "Photosynthesis is the process by which plants, algae, and some bacteria convert light energy into chemical energy."
+    },
+    {
+      "id": "chloroplasts",
+      "label": "Chloroplasts",
+      "summary": "Chloroplasts are specialized leaf organelles containing chlorophyll that absorb light to power photosynthesis."
+    },
+    {
+      "id": "light-dependent-reactions",
+      "label": "Light-Dependent Reactions",
+      "summary": "Occurring in thylakoid membranes, these reactions split water to release oxygen and produce ATP and NADPH."
+    },
+    {
+      "id": "calvin-cycle",
+      "label": "Calvin Cycle",
+      "summary": "Taking place in the stroma, the Calvin cycle uses ATP and NADPH to fix carbon dioxide into three-carbon sugars."
+    },
+    {
+      "id": "stomata",
+      "label": "Stomata",
+      "summary": "Stomata are small leaf pores that absorb carbon dioxide while balancing oxygen and water vapor loss."
+    },
+    {
+      "id": "global-ecological-impact",
+      "label": "Global Ecological Impact",
+      "summary": "Photosynthesis supplies atmospheric oxygen and forms the base of most global food chains."
+    }
+  ],
+  "connections": [
+    {
+      "from": "photosynthesis",
+      "to": "chloroplasts",
+      "label": "takes place in"
+    },
+    {
+      "from": "chloroplasts",
+      "to": "light-dependent-reactions",
+      "label": "hosts"
+    },
+    {
+      "from": "chloroplasts",
+      "to": "calvin-cycle",
+      "label": "hosts"
+    },
+    {
+      "from": "photosynthesis",
+      "to": "stomata",
+      "label": "exchanges gas via"
+    },
+    {
+      "from": "photosynthesis",
+      "to": "global-ecological-impact",
+      "label": "drives"
+    }
+  ]
+}

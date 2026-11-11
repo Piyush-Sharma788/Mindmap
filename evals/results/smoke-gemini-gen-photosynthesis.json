@@ -1,0 +1,65 @@
+{
+  "suite": "evals",
+  "mode": "record",
+  "provider": "record",
+  "llm_provider": "gemini",
+  "models": {
+    "generate": "gemini-3.6-flash",
+    "grow": "gemini-3.6-flash"
+  },
+  "effort": "medium",
+  "prompt_version": "2026-11-11.1",
+  "max_cost_usd": 0.2,
+  "run_at": "2026-11-11T04:06:22+00:00",
+  "note": "tokens are provider-reported (replay: as recorded); cost is an estimate from list prices",
+  "aggregate": {
+    "cases_total": 1,
+    "cases_scored": 1,
+    "cases_not_recorded": 0,
+    "cases_errored": 0,
+    "expected_errors_matched": null,
+    "size_ok_rate": 1.0,
+    "connected_rate": 1.0,
+    "first_pass_ok_rate": 1.0,
+    "mean_repairs": 0.0,
+    "generate_concept_recall": 1.0,
+    "grow_new_concept_recall": null,
+    "grow_duplicate_leakage": null,
+    "grow_max_requests": null,
+    "grow_accounting_ok_rate": null,
+    "injection_followed_rate": null,
+    "cases_skipped_budget": 0,
+    "requests_total": 1,
+    "mean_latency_ms_per_case": 10982.0,
+    "max_latency_ms_per_case": 10982,
+    "estimated_cost_usd_total": 0.006644,
+    "estimated_cost_usd_mean_generate": 0.0066,
+    "estimated_cost_usd_mean_grow": null
+  },
+  "cases": [
+    {
+      "id": "gen-photosynthesis",
+      "kind": "generate",
+      "wall_ms": 10984,
+      "status": "ok",
+      "requests": 1,
+      "outcomes": [
+        "ok"
+      ],
+      "latency_ms_total": 10982,
+      "first_pass_ok": true,
+      "repairs": 0,
+      "nodes": 6,
+      "connected": true,
+      "input_tokens": 563,
+      "output_tokens": 1659,
+      "cache_read_input_tokens": 0,
+      "estimated_cost_usd": 0.006644,
+      "excerpt_sent_ratio": 1.0,
+      "injection_followed": null,
+      "size_ok": true,
+      "concept_recall": 1.0,
+      "missed_concepts": []
+    }
+  ]
+}

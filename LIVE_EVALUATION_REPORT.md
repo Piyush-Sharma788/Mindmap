@@ -1,54 +1,104 @@
 # Live Evaluation Report
 
-> **Status: NOT RUN.** No live model request has been made. As of 2026-11-11 09:15 no `GEMINI_API_KEY` (or Anthropic key) was configured, and the live run needs the user's explicit approval. This file records the preflight, the method and the planned runs. Results will be added **only from recorded output**: `evals/results/*.json`, plus cassettes in `evals/cassettes/`.
+> **Status: SMOKE TEST ONLY (1 case, 1 live request), run 2026-11-11 09:36 IST.** The full suite has **not** been run; it needs separate approval. Measured values come from the provider response recorded in `evals/cassettes/22450a4b2b700e0fe308fcb03c65ac34.json` and `evals/results/smoke-gemini-gen-photosynthesis.json`. Anything not measured is labelled **estimate** or **inference**.
 
 ## 1. Provider and model under test
 | | |
 |---|---|
-| Provider | Google Gemini API (Google AI Studio), SDK `google-genai` 3.1.0 |
-| Model | `gemini-3.6-flash`. Listed as stable on aistudio.google.com/docs/models; free tier "free of charge" for input and output on aistudio.google.com/docs/pricing (both checked 2026-11-11) |
-| Paid-equivalent price used for estimates and the ceiling | $0.75 input / $3.75 output (thinking included) per MTok, valid until 2026-12-31 |
-| Not under test | Anthropic Claude. **No Claude figure in this repository is measured;** all Claude costs are estimates (APPROACH §7) |
+| Provider | Google Gemini API (Google AI Studio, free tier as confirmed by the user), SDK `google-genai` 3.1.0 |
+| Model requested / reported by the API | `gemini-3.6-flash` / `gemini-3.6-flash` |
+| Configuration | `MINDMAP_PROVIDER=gemini` from `.env`; no shell overrides; `max_output_tokens=16000`; SDK `HttpRetryOptions(attempts=1)`; timeout 180,000 ms; default thinking; JSON-schema output |
+| Paid-equivalent price (estimate basis only) | $0.75 input / $3.75 output (thinking included) per MTok, valid until 2026-12-31 (aistudio.google.com/docs/pricing, checked 2026-11-11). **On the free tier the billed cost is $0.** |
+| Not under test | Anthropic Claude: no Claude figure in this repository is measured |
 
-## 2. Preflight checklist (before any request)
-- [x] `.env` contains a `GEMINI_API_KEY` line and `MINDMAP_PROVIDER=gemini`. Checked in Phase 7 by counting lines only; values not read. The key has **not** been used: no request has been made.
-- [x] `.env` is gitignored (`git check-ignore .env`); no credential-like file is tracked; history secret scan clean.
-- [x] SDK retries off (`HttpRetryOptions(attempts=1)`, test `test_sdk_retries_disabled_and_timeout_in_ms`); no server-side fallback; no embeddings or token-count calls.
-- [ ] **The user confirms that the AI Studio project is on the Free tier with no billing account.** The pricing page does not say how a project is assigned to a tier, so this cannot be checked from the code.
-- [ ] The user approves Step A, then Step B.
+## 2. Preflight (all checked before the request)
+- [x] `.env` sets `MINDMAP_PROVIDER` and `GEMINI_API_KEY`. Variable names were checked, values never printed. No shell overrides.
+- [x] The key was rotated after the Phase 7 incident. The new key's hash differs from the leaked one; `.env` is gitignored and was never tracked.
+- [x] The resolved provider/model is `gemini` / `gemini-3.6-flash`, and its price is known, so the ceiling is enforceable.
+- [x] Request budget for generate: 2. Worst case for the case: 2 × (40K × $0.75 + 16K × $3.75)/1M = **$0.18 ≤ the $0.20 ceiling**.
+- [x] No server-side fallback, embeddings or token-count calls. The SDK makes one attempt per request.
+- [x] Free tier with no billing: **confirmed by the user**. It can't be checked from the code.
 
-## 3. Planned runs
-| Step | Command | Cases | Most requests possible | Ceiling (paid-equivalent USD) | Expected billed cost |
-|---|---|---|---|---|---|
-| A, smoke test | `mindmap eval --suite evals --mode record --cases gen-photosynthesis --max-cost-usd 0.20` | 1 | 2 | 0.20 (worst case 0.18) | $0 on the free tier |
-| B, full suite | `mindmap eval --suite evals --mode record --pause-s 10 --max-cost-usd 2.00` | 9 that make requests, plus 1 expected `InputError` | 18 | 2.00 (worst case 1.62) | $0 on the free tier |
+## 3. Command
+```bash
+.venv/bin/mindmap -v eval --suite evals --mode record --cases gen-photosynthesis \
+    --max-cost-usd 0.20 --out evals/results/smoke-gemini-gen-photosynthesis.json
+```
 
-The ceiling check runs before each case: the spend so far (provider-reported tokens × list price) plus that case's worst case (2 × (40K input + 16K output)) must stay ≤ the ceiling. Otherwise the case is skipped and reported as `skipped_budget`.
+## 4. Smoke-test results: `gen-photosynthesis`
 
-## 4. Method
-- **Cases** (`evals/cases.json`):
-  - `gen-photosynthesis`, `gen-remote-work`, `gen-printing-press`, `gen-injection`;
-  - `grow-photosynthesis-extension`, `grow-identical-document`, `grow-ceiling` (23-node seed), `grow-long-document` (63K report, new material in the last sections), `grow-injection`, `grow-empty-document`.
-- **Metrics per case:**
-  - requests and per-request outcomes;
-  - provider-reported input, output (thinking included) and cached tokens;
-  - estimated cost; latency;
-  - contract validity; 5–9 nodes or ≤ 25; connectivity; first-pass success; repairs;
-  - concept recall (generate) and new-concept recall (grow), **matched lexically against hand-written aliases, which undercounts paraphrase**;
-  - duplicate leakage: expected-covered concepts that appear among *added* nodes;
-  - grow accounting; omitted reasons;
-  - `injection_followed`: the planted marker appears anywhere in the map.
-- **What it can't show:** with n = 10, AI-written fixtures and no human labels, the results are directional. Run-to-run variance isn't measured (one run per case).
+### 4.1 Measured (from the provider response and our timer)
+| Metric | Value | Source |
+|---|---|---|
+| Provider requests | **1** (budget 2; no retry or repair needed) | `usage` records / `-v` log |
+| Outcome / stop reason | `ok` / `end_turn` (Gemini `STOP`) | response |
+| Input tokens | **563** | Gemini `usage_metadata` (prompt minus cached) |
+| Output tokens (thinking included) | **1,659** | Gemini `candidates_token_count + thoughts_token_count` |
+| Cached tokens | 0 | `usage_metadata` |
+| Latency | **10,982 ms** (one request) | `BudgetedCaller` timer |
+| Prompt characters sent (system + user) | 2,506 | measured locally |
+| Raw JSON response length | 1,850 characters | cassette |
+| Contract-valid map | yes | `Mindmap` validation |
+| Node count (5–9) | **6**, within range | |
+| Connected to root | yes (5 edges, a tree) | |
+| First-pass success / repairs | yes / **0 repairs**, nothing trimmed | |
+| Concept recall (lexical, 7 expected concepts) | **7/7 = 1.0** | eval runner |
 
-## 5. Results
-**Not available. Nothing has been run.** This section will hold, from the results JSON only:
-- the aggregate table;
-- per-case rows;
-- the maps produced;
-- every failure, rate limit or refusal, verbatim.
+### 4.2 Estimated (derived, not billed)
+| Item | Value | How |
+|---|---|---|
+| Paid-equivalent cost | **$0.006644** | 563 × $0.75/M + 1,659 × $3.75/M (list price × measured tokens) |
+| Billed cost | **$0** | free tier, confirmed by the user, not verifiable from code |
+| Share of the cost that is output | ~94% | from the line above |
+| Thinking tokens | **inferred ~1,200** of the 1,659 output tokens | the JSON is ~1,850 characters, roughly 450 tokens. The cassette does not store Gemini's separate `thoughts_token_count`, so this is not a measurement |
 
-## 6. Pipeline bench (separate; NOT live model results)
-These come from `mindmap eval --mode pipeline`, which uses scripted model output and seeded fuzzing. They measure how the code handles model output, **not how good the model is**.
+### 4.3 The map the model produced
+Rebuilt offline from the recorded response, with no extra API call. Saved as `evals/results/smoke-gemini-gen-photosynthesis.map.json` and `.mmd`.
+
+- **Title:** "Photosynthesis Overview"; root `photosynthesis`.
+- **Nodes:** Photosynthesis (importance 5), Chloroplasts (4), Light-Dependent Reactions (4), Calvin Cycle (4), Stomata (3), Global Ecological Impact (4).
+- **Edges:**
+  - photosynthesis *takes place in* chloroplasts;
+  - chloroplasts *hosts* light-dependent-reactions;
+  - chloroplasts *hosts* calvin-cycle;
+  - photosynthesis *exchanges gas via* stomata;
+  - photosynthesis *drives* global-ecological-impact.
+- **Manual quality review** (by the assistant; one reviewer, one sample):
+  - every summary is a single accurate sentence supported by the document;
+  - the structure is sensible;
+  - no invented facts were noticed.
+- **Caveat on recall:** "chlorophyll", "sugar/glucose" and "oxygen" were matched inside *summaries*. Chlorophyll and glucose are not separate nodes. The generator aimed for about 7 nodes and returned 6.
+
+### 4.4 What this smoke test verifies, and what it doesn't
+- **Verified live:**
+  - the Gemini integration works end to end: model ID, `response_json_schema` with `$defs`/`$ref` and the nullable rewrite path, usage fields, our parser and validator;
+  - the spending ceiling admitted the case correctly;
+  - the request count stayed within budget.
+- **Not verified by this test:**
+  - grow (no grow case was run), and therefore live duplicate leakage, preservation, overflow and the two-request limit under real conditions;
+  - injection resistance;
+  - error and rate-limit handling against the real API (no error occurred);
+  - run-to-run variability (one sample);
+  - any Anthropic behaviour.
+
+## 5. Findings that correct earlier estimates
+- **Input tokens were much lower than estimated.** APPROACH §7 estimated ~1.6K input tokens for generate (characters ÷ 2.5, Anthropic's tokenizer ratio, *including* the 1.5K-character schema). Gemini reported **563**, about 4.5 characters per token on the prompt text alone. The JSON schema appears not to be billed as ordinary input here. That's an inference from one sample.
+- **Output dominates cost.** About 94% of the paid-equivalent cost was output, consistent with the "thinking drives cost" expectation. Gemini thinking was left at the model default, and lowering it is the obvious lever. Its quality impact is unmeasured.
+- **One generate on Gemini 3.6 Flash** cost **$0.0066 paid-equivalent**, inside the earlier estimated range ($0.003–0.010) but toward its top end.
+
+## 6. Limitations
+1. **n = 1.** No statistical claim is possible; this is a functional smoke test.
+2. Gemini results say nothing about Claude.
+3. Lexical recall can give credit for concepts mentioned only inside summaries.
+4. The cassette stores only `Usage` (input, output, cache), not Gemini's thinking-token breakdown, so the thinking split above is inferred.
+5. The "billed $0" figure depends on the project tier the user confirmed.
+6. Fixtures and expectations are AI-written.
+
+## 7. Next step (needs separate approval)
+Full suite: 9 request-making cases (generate and grow, including the ceiling, the 63K document, injection and the identical-document case), at most 18 requests, `--pause-s 10`, `--max-cost-usd 2.00` paid-equivalent.
+
+## 8. Pipeline bench (separate; NOT live model results)
+These come from `mindmap eval --mode pipeline`, with scripted model output and seeded fuzzing. They measure how the code handles model output, **not model quality**.
 
 | Metric | Phase 3 code | Phase 4 code |
 |---|---|---|
