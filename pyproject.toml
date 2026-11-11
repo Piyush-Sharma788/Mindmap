@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mindmap-engine"
+version = "0.1.0"
+description = "Mini mindmap engine: generate a mindmap from text, grow it with a second document."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7,<3",
+    "typer>=0.12",
+    "anthropic>=0.75",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+mindmap = "mindmap.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
