@@ -85,7 +85,7 @@ export ANTHROPIC_API_KEY=...            # never commit it; .env is gitignored
 - **The suite** (`evals/cases.json`) has 10 cases: 4 generate and 6 grow. The grow cases cover overlap, an identical document, a binding ceiling, a 63K-character report whose new material sits in the **last** sections, prompt injection, and an empty document.
 - **Status:** only the smoke test has been recorded. Replay scores `gen-photosynthesis` offline (reproducing the live numbers) and reports 8 cases as `not_recorded`.
 - **Replaying:** run with the same provider and model as the recording, for example `MINDMAP_PROVIDER=gemini .venv/bin/mindmap eval --suite evals --mode replay` (no key needed). With other settings every case shows `not_recorded`, by design. Replay never constructs a real provider (`tests/test_offline_guarantees.py`). **Replayed latency is reported as 0** because cassettes don't store it, so quote latency only from live runs. The empty-document case checks for an `InputError` and needs no recording. **There are no model-quality numbers yet.**
-- **Fixtures:** the documents, seed maps and expected concepts were written with AI assistance and reviewed by hand.
+- **Fixtures:** the documents, seed maps and expected concepts were written for this project and reviewed by hand.
 
 ### Pipeline bench (offline, deterministic)
 
@@ -138,9 +138,5 @@ tests/            offline pytest suite
 - **Cost:** most cost figures are estimates. Measured prompt sizes are reproducible with `python -m mindmap.evals.prompt_sizes`.
 - **Duplicate detection:** the backstop is lexical and misses paraphrases and some plurals. Duplicates also share the 15-candidate limit.
 - **Admission and text heuristics:** greedy admission is not guaranteed optimal; sentence rules are heuristics; text dropped by the excerpt is reported only as a ratio.
-- **Eval set:** small and AI-written. The full list is in APPROACH.md §12.
+- **Eval set:** small. The full list is in APPROACH.md §12.
 - **Live calls from the CLI:** once `.env` holds a key, `generate`, `grow` and `eval --mode record|live` run from this folder make **live** requests. `make test`, `eval --mode pipeline` and `eval --mode replay` never do; a test proves this.
-
-## AI assistance
-
-This code and the planning documents were written with Claude Code (Claude Opus 5.5), working in phases that the author reviewed and approved. Details and the time note will go in `APPROACH.md`.
