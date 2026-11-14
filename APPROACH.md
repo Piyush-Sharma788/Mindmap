@@ -1,6 +1,6 @@
 # APPROACH
 
-> **Status (2026-11-11):** the engine works end to end against scripted model output, and that is covered by 191 offline tests. **The only live model call so far is one live Gemini smoke-test request (`gen-photosynthesis`, see LIVE_EVALUATION_REPORT.md):** 1 request, a valid 6-node map, 0 repairs, 563 input / 1,659 output tokens, about $0.0066 paid-equivalent ($0 on the free tier). The full live suite has not been run, so most model-quality statements below are still marked *pending* or *estimate*. Pipeline numbers come from committed files you can re-run.
+> **Status (2026-11-11):** the engine works end to end against scripted model output, and that is covered by 191 offline tests. **The only live model call so far is one live Gemini smoke-test request (`gen-photosynthesis`):** 1 request, a valid 6-node map, 0 repairs, 563 input / 1,659 output tokens, about $0.0066 paid-equivalent ($0 on the free tier). The full live suite has not been run, so most model-quality statements below are still marked *pending* or *estimate*. Pipeline numbers come from committed files you can re-run.
 
 ## 1. Design
 
@@ -145,7 +145,7 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
      - injection marker.
      
      Recordings replay offline, so code-only changes can be re-scored for free. A prompt or model change misses the recordings by design.
-- **Findings so far are pipeline-only:** the five bugs fixed in Phase 4 (see TECHNICAL_DECISIONS, P4-1 to P4-6).
+- **Findings so far are pipeline-only:** the five bugs fixed in Phase 4.
 - **Live findings so far** (Gemini smoke test, n = 1): a valid 6-node map, 1 request, 0 repairs, lexical recall 7/7 (some concepts matched only inside summaries). The full suite is pending.
 - **Weaknesses:** small n (10 cases); AI-written fixtures and expectations; lexical matching; no LLM judge (cost and circularity); no human labels.
 
@@ -167,7 +167,7 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
   - an LLM-as-judge;
   - an agent loop.
 - **Designed but not built:** `--trace`, `--debug-prompts`, `eval compare`.
-- **Bugs found and fixed.** Each was demonstrated by a failing test or a measurement first; details in TECHNICAL_DECISIONS (Phase 4 table):
+- **Bugs found and fixed.** Each was demonstrated by a failing test or a measurement first:
   - pricing used a 10% cache-read rate (5% is correct on Sonnet and Opus 5.5);
   - the excerpt ratio was missing from the JSON report;
   - the SDK's missing-credential `TypeError` surfaced as a traceback;
@@ -238,7 +238,7 @@ A server-requested retry delay over 10 s is not retried. Retrying that soon woul
 | **Claude's execution time** (the agent working autonomously within phases) | not separately measured | the agent cannot reliably separate its own working time from approval pauses |
 | **Whole session, wall-clock** (agent work **plus** the author's approval pauses) | about 07:52 → 09:50 on 2026-11-11, then later short phases (Phases 8–10.1) | file and commit timestamps |
 
-- **Commits:** 17 commits on 2026-11-11, 08:16–09:22 (`git log`), **agent-paced bursts, often minutes apart**. Each is a tested milestone. Phases 8–10.1 (the live smoke test, the offline audit, the final fixes) are **not yet committed**; they will become separate, phase-labelled commits after the author's review. **Attribution:** the first 17 commits originally carried a `Co-Authored-By` trailer naming the AI tool. **At the author's request, those trailers were removed from the commit messages by a history rewrite on 2026-11-11.** Code, authors and dates were unchanged; every commit hash changed (see HISTORY_REWRITE.md). Later commits use only the author's Git identity and neutral messages. Removing the trailers does not change who wrote the code: AI assistance is disclosed in this document (§14), and nothing about it is hidden.
+- **Commits:** 17 commits on 2026-11-11, 08:16–09:22 (`git log`), **agent-paced bursts, often minutes apart**. Each is a tested milestone. Phases 8–10.1 (the live smoke test, the offline audit, the final fixes) are **not yet committed**; they will become separate, phase-labelled commits after the author's review. **Attribution:** the first 17 commits originally carried a `Co-Authored-By` trailer naming the AI tool. **At the author's request, those trailers were removed from the commit messages by a history rewrite on 2026-11-11.** Code, authors and dates were unchanged; every commit hash changed. Later commits use only the author's Git identity and neutral messages. Removing the trailers does not change who wrote the code: AI assistance is disclosed in this document (§14), and nothing about it is hidden.
 - **Credential incident (disclosed):**
   - A Gemini API key was put into the *tracked* template `.env.example`, and a `git add -A` **committed it in local Git history**.
   - The affected commit was **never pushed**: the repository had no remote at any point.

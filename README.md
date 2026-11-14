@@ -2,13 +2,13 @@
 
 A library and thin CLI that turns a document into a small concept mindmap (`generate`) and grows an existing map with a second document (`grow`). Grow uses **at most 2 LLM requests**, whatever the document length, and the map holds **at most 25 nodes**.
 
-Design: [ARCHITECTURE.md](ARCHITECTURE.md). Decisions and trade-offs: [TECHNICAL_DECISIONS.md](TECHNICAL_DECISIONS.md). Requirement status: [REQUIREMENTS_CHECKLIST.md](REQUIREMENTS_CHECKLIST.md). Write-up: [APPROACH.md](APPROACH.md). Live evaluation: [LIVE_EVALUATION_REPORT.md](LIVE_EVALUATION_REPORT.md) (**smoke test only**: one Gemini generate case; the full suite has not been run). Code map: [CODE_WALKTHROUGH.md](CODE_WALKTHROUGH.md). Audit: [FINAL_REQUIREMENTS_AUDIT.md](FINAL_REQUIREMENTS_AUDIT.md). Submission: [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md).
+Design, decisions, trade-offs and evaluation: [APPROACH.md](APPROACH.md). Live evaluation is a **smoke test only**: one Gemini generate case; the full suite has not been run.
 
 ## How it works (summary)
 - **Deterministic code bounds the input.** Validation, delimiter neutralisation, then extractive passage selection to a fixed 24,000-character budget (no model).
 - **One structured-output request** through a `BudgetedCaller`, which takes a budget slot *before* sending. Generate and grow each allow at most 2 requests: the first, plus one retry or repair. SDK retries are off.
 - **Code turns the model's draft into the contract.** Ids, graph repair, 5–9 nodes for generate; for grow: duplicates (the model's judgement plus an exact-match backstop), greedy admission under the 25-node ceiling, and an append-only merge checked byte-for-byte. Every candidate ends up added, duplicate or omitted, with a reason.
-- Full design: [ARCHITECTURE.md](ARCHITECTURE.md). Reasoning, costs and trade-offs: [APPROACH.md](APPROACH.md).
+- Full design, reasoning, costs and trade-offs: [APPROACH.md](APPROACH.md).
 
 ## Setup (one command)
 
@@ -134,7 +134,7 @@ tests/            offline pytest suite
 ```
 
 ## Limitations
-- **Live model evidence is one Gemini generate** (n = 1; see LIVE_EVALUATION_REPORT.md). Grow has not run against a real model, and nothing has run on Anthropic. Pipeline-bench numbers come from scripted model output; they are not model quality.
+- **Live model evidence is one Gemini generate** (n = 1). Grow has not run against a real model, and nothing has run on Anthropic. Pipeline-bench numbers come from scripted model output; they are not model quality.
 - **Cost:** most cost figures are estimates. Measured prompt sizes are reproducible with `python -m mindmap.evals.prompt_sizes`.
 - **Duplicate detection:** the backstop is lexical and misses paraphrases and some plurals. Duplicates also share the 15-candidate limit.
 - **Admission and text heuristics:** greedy admission is not guaranteed optimal; sentence rules are heuristics; text dropped by the excerpt is reported only as a ratio.
