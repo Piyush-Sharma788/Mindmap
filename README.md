@@ -18,6 +18,32 @@ make run            # or: ./run.sh
 
 It sets up `.venv` (or rebuilds a broken one), runs the offline tests, the pipeline bench and the offline replay. If a key is set (in the shell or `.env`), it then makes **live** requests: it generates a map from `evals/docs/photosynthesis.txt`, grows it with `photosynthesis_part2.txt`, and renders Mermaid. Outputs go to `out/`. Use `OFFLINE=1 make run` to skip the live part.
 
+## Quick start: make your own mindmap
+
+**1. Add an API key (once).** Run `cp .env.example .env`, then put your key after `GEMINI_API_KEY=` in `.env`. A free key is available from Google AI Studio.
+
+**2. Run everything.**
+```bash
+make run
+```
+This takes about a minute and ends with `Done. Outputs in out/`.
+
+**3. See the mindmap.** Open `out/map2.mmd`, copy everything in it, and paste it into the left panel of [mermaid.live](https://mermaid.live). The mindmap appears on the right.
+
+**4. Use your own text.** Save it as a plain `.txt` file (UTF-8), for example `notes.txt`, then:
+```bash
+.venv/bin/mindmap generate --in notes.txt --out out/notes.json
+.venv/bin/mindmap render --map out/notes.json --out out/notes.mmd
+```
+Open `out/notes.mmd` and paste it into mermaid.live, as in step 3.
+
+**5. Add a second document to the same map (optional).**
+```bash
+.venv/bin/mindmap grow --map out/notes.json --in more_notes.txt --out out/notes2.json
+.venv/bin/mindmap render --map out/notes2.json --out out/notes2.mmd
+```
+Grow adds new ideas without changing what is already in the map. A map holds at most 25 ideas.
+
 ## Setup (one command)
 
 ```bash
