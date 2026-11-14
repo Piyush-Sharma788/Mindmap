@@ -10,6 +10,14 @@ Design, decisions, trade-offs and evaluation: [APPROACH.md](APPROACH.md). Live e
 - **Code turns the model's draft into the contract.** Ids, graph repair, 5–9 nodes for generate; for grow: duplicates (the model's judgement plus an exact-match backstop), greedy admission under the 25-node ceiling, and an append-only merge checked byte-for-byte. Every candidate ends up added, duplicate or omitted, with a reason.
 - Full design, reasoning, costs and trade-offs: [APPROACH.md](APPROACH.md).
 
+## Run everything (one command)
+
+```bash
+make run            # or: ./run.sh
+```
+
+It sets up `.venv` (or rebuilds a broken one), runs the offline tests, the pipeline bench and the offline replay. If a key is set (in the shell or `.env`), it then makes **live** requests: it generates a map from `evals/docs/photosynthesis.txt`, grows it with `photosynthesis_part2.txt`, and renders Mermaid. Outputs go to `out/`. Use `OFFLINE=1 make run` to skip the live part.
+
 ## Setup (one command)
 
 ```bash
