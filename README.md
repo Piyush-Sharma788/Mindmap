@@ -75,7 +75,7 @@ export ANTHROPIC_API_KEY=...            # never commit it; .env is gitignored
   - for grow: what was added, what was dropped as a duplicate, and what was omitted, with a reason;
   - excerpt statistics;
   - per-request usage, with provider-reported tokens and a cost **estimated** from list prices.
-- `-v` logs one line per LLM request to stderr. Document text is never logged.
+- `-v` (placed before the command, e.g. `mindmap -v generate ...`) logs one line per LLM request to stderr. Document text is never logged.
 - Model and effort can be overridden with `MINDMAP_MODEL`, `MINDMAP_MODEL_GENERATE`, `MINDMAP_MODEL_GROW` and `MINDMAP_EFFORT`.
 - Exit codes: 2 config or credentials, 3 bad input, 4 provider failure, 5 unusable model output, 70 internal invariant (a bug). No output file is written when the command fails.
 

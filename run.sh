@@ -36,9 +36,9 @@ has_key() {
 if [ -z "${OFFLINE:-}" ] && has_key; then
   mkdir -p "$OUT"
   step "LIVE: generate a mindmap"
-  "$BIN/mindmap" generate --in evals/docs/photosynthesis.txt --out "$OUT/map.json" -v
+  "$BIN/mindmap" -v generate --in evals/docs/photosynthesis.txt --out "$OUT/map.json"
   step "LIVE: grow it with a second document"
-  "$BIN/mindmap" grow --map "$OUT/map.json" --in evals/docs/photosynthesis_part2.txt --out "$OUT/map2.json" -v
+  "$BIN/mindmap" -v grow --map "$OUT/map.json" --in evals/docs/photosynthesis_part2.txt --out "$OUT/map2.json"
   step "Render Mermaid diagram"
   "$BIN/mindmap" render --map "$OUT/map2.json" --out "$OUT/map2.mmd"
   step "Done. Outputs in $OUT/ (paste $OUT/map2.mmd into mermaid.live)"
